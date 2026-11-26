@@ -1,0 +1,67 @@
+{
+  "llm": { "seeds": 10, "min_passing_seeds": 8 },
+  "E-01": {
+    "horizon_s": 1800,
+    "start_drive": 0.3,
+    "max_drive": 0.8,
+    "min_share_of_ticks_below_max": 0.95,
+    "max_goal_switches_per_min": 6
+  },
+  "E-02": {
+    "house_appears_at_s": 60,
+    "inside_within_s": 180,
+    "visits_compared": 3,
+    "max_box_to_house_entry_time_ratio": 0.5
+  },
+  "E-03": {
+    "cover_within_s_first_rain": 60,
+    "cover_within_s_second_rain": 20,
+    "cover_within_s_empty_memory": 180
+  },
+  "E-04": {
+    "hunger_levels": [0.2, 0.5, 0.9],
+    "play_within_s": 10,
+    "back_to_own_drives_within_s": 15,
+    "window_s": 30,
+    "max_switches_in_window": 2
+  },
+  "E-05": {
+    "session_s": 600,
+    "random_laugh_rate": 0.1,
+    "min_laugh_rate_ratio_last_to_first_third": 1.5,
+    "min_rank_correlation": 0.5,
+    "min_share_of_max_entropy": 0.6
+  },
+  "E-06": {
+    "request_every_s": 20,
+    "requests": 5,
+    "attempt_within_s": 15,
+    "min_share_attempted": 0.8,
+    "max_attempts_at_impossible": 3
+  },
+  "E-07": {
+    "max_attempts": 10,
+    "max_attempts_on_repeat": 2,
+    "new_skills": 1
+  },
+  "E-08": {
+    "seeds": 10,
+    "min_seeds_won": 8
+  },
+  "E-09": {
+    "tried_within_s": 180,
+    "rain_after_s": 300
+  },
+  "E-10": {
+    "drop_rate": 0.2,
+    "contradict_rate": 0.1,
+    "kid_delay_s": 5,
+    "max_repeats_without_change": 5,
+    "time_limit_factor": 2
+  },
+  "E-11": {
+    "rule_changes_at_s": 300,
+    "max_house_entries_while_wet": 4,
+    "dry_within_s": 180
+  }
+}

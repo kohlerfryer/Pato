@@ -1,0 +1,22 @@
+# The files that define "correct". A pull request touching one needs the owner's
+# `owner-approved` label (see AGENTS.md). tools/gates reads this list, and understands
+# two forms only: /folder/ and /file.
+/.github/              @kohlerfryer
+/.claude/              @kohlerfryer
+/AGENTS.md             @kohlerfryer
+/CLAUDE.md             @kohlerfryer
+/docs/prd.md           @kohlerfryer
+/docs/spec.md          @kohlerfryer
+/docs/evals.md         @kohlerfryer
+/docs/phases.md        @kohlerfryer
+/docs/phase.json       @kohlerfryer
+/evals/                @kohlerfryer
+/tools/                @kohlerfryer
+/package.json          @kohlerfryer
+/pnpm-lock.yaml        @kohlerfryer
+/eslint.config.js      @kohlerfryer
+/tsconfig.json         @kohlerfryer
+/vitest.config.ts      @kohlerfryer
+/knip.json             @kohlerfryer
+/.jscpd.json           @kohlerfryer
+/.prettierrc.json      @kohlerfryer

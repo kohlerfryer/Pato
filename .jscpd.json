@@ -1,0 +1,9 @@
+{
+  "path": ["src", "tools"],
+  "pattern": "**/*.ts",
+  "ignore": ["**/*.test.ts"],
+  "threshold": 3,
+  "minTokens": 60,
+  "reporters": ["console"],
+  "silent": true
+}
