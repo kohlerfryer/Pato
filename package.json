@@ -5,7 +5,9 @@
   "packageManager": "pnpm@12.23.0",
   "type": "module",
   "scripts": {
-    "check": "pnpm format:check && pnpm lint && pnpm types && pnpm test && pnpm deadcode && pnpm dupes && pnpm trace",
+    "check": "pnpm format:check && pnpm lint && pnpm types && pnpm test && pnpm deadcode && pnpm dupes && pnpm trace && pnpm build",
+    "dev": "vite",
+    "build": "vite build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings 0",
@@ -29,6 +31,7 @@
     "prettier": "^3.10.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.73.0",
+    "vite": "^8.3.8",
     "vitest": "^5.1.1"
   }
 }

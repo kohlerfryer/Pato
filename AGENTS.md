@@ -70,6 +70,8 @@ pnpm trace       # docs, tests and phase checked against each other
 pnpm test        # tests with coverage thresholds
 pnpm format      # fix formatting
 pnpm gates       # what the pull request checks will say about this branch
+pnpm dev         # the page, served locally
+pnpm build       # the page, built into dist/ as static files
 ```
 
 ## Limits

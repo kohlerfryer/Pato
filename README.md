@@ -21,6 +21,10 @@ pnpm next    # what to build next
 
 Needs pnpm and a Node that runs TypeScript files directly. It is developed on Node 22.23, and CI uses Node 26.
 
+## Watch it
+
+Every merge to `main` builds the page and, once GitHub Pages is switched on for the repository, publishes it. On a phone, open the address and add it to the home screen. The build id at the bottom of the page shows which commit is running.
+
 ## How it stays in line
 
 Every requirement is answered by spec items, every spec item is proven by a test that cites it, and `pnpm trace` checks those links. A phase can't be passed while any of its items lacks a test. The files that define "correct" change only with the owner's approval.

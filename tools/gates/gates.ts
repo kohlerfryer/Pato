@@ -10,6 +10,8 @@ export interface Change {
 }
 
 const SOURCE_ROOTS = ["src/", "tools/"];
+/** The page's own code draws on a canvas and has no unit tests; its logic lives in tested modules. */
+const UNTESTED_ROOTS = ["src/web/"];
 
 /** Reads `git diff --name-status`; a rename counts as a change to both its old and new path. */
 export function parseChanges(nameStatus: string): Change[] {
@@ -43,7 +45,10 @@ export function isProtected(path: string, patterns: readonly string[]): boolean 
 const isTest = (path: string): boolean => path.endsWith(".test.ts");
 
 const isSource = (path: string): boolean =>
-  SOURCE_ROOTS.some((root) => path.startsWith(root)) && path.endsWith(".ts") && !isTest(path);
+  SOURCE_ROOTS.some((root) => path.startsWith(root)) &&
+  !UNTESTED_ROOTS.some((root) => path.startsWith(root)) &&
+  path.endsWith(".ts") &&
+  !isTest(path);
 
 /** Source files changed in a pull request where no test changed at all. */
 export function untestedSources(changes: readonly Change[]): string[] {

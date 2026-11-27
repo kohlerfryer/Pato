@@ -79,6 +79,16 @@ describe("untestedSources", () => {
     expect(untestedSources(parseChanges("D\tsrc/a.ts\nM\tcontent/objects/house.json"))).toEqual([]);
   });
 
+  it("doesn't ask for a test when only the page's own code changed", () => {
+    expect(untestedSources(parseChanges("M\tsrc/web/main.ts\nA\tsrc/web/canvas.ts"))).toEqual([]);
+  });
+
+  it("still asks for a test when game code changes along with the page", () => {
+    expect(untestedSources(parseChanges("M\tsrc/web/main.ts\nM\tsrc/view/model.ts"))).toEqual([
+      "src/view/model.ts",
+    ]);
+  });
+
   it("covers the tools as well as the game", () => {
     expect(untestedSources(parseChanges("M\ttools/trace/check.ts"))).toEqual([
       "tools/trace/check.ts",
