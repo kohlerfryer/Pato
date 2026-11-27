@@ -30,3 +30,21 @@ export function frozen(state: WorldState): WorldState {
 export function createWorld(entities: readonly Entity[]): WorldState {
   return frozen({ entities });
 }
+
+export function find(state: WorldState, id: EntityId): Entity | undefined {
+  return state.entities.find((entity) => entity.id === id);
+}
+
+/** `state` with `entity` in place of the one that has its id. */
+export function withEntity(state: WorldState, entity: Entity): WorldState {
+  return {
+    ...state,
+    entities: state.entities.map((each) => (each.id === entity.id ? entity : each)),
+  };
+}
+
+/** A numeric property of `entity`, or 0 if it has none by that name. */
+export function amount(entity: Entity, name: string): number {
+  const value = entity.props[name];
+  return typeof value === "number" ? value : 0;
+}
