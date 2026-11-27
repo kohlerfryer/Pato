@@ -1,6 +1,6 @@
 /** Turns a scenario file into a running world: entities placed, agents wired up, triggers timed. */
 
-import { createArbiter, needDrive } from "../agent/drives.ts";
+import { createArbiter, needDrive, urgencies } from "../agent/drives.ts";
 import type { Content } from "../content/content.ts";
 import { type CreatureDef, instinctsOf } from "../content/creatures.ts";
 import type { ObjectDef } from "../content/objects.ts";
@@ -70,15 +70,19 @@ function creatureEntity(
   };
 }
 
-const agentSetup = (id: string, def: CreatureDef, sensors: readonly Sensor[]): AgentSetup => ({
-  id,
-  sensors,
-  drives: createArbiter(Object.keys(def.weights).map(needDrive), def.weights, id),
-  planner: createStubPlanner(id),
-  skills: instinctsOf(def),
-  notes: [],
-  learners: [],
-});
+function agentSetup(id: string, def: CreatureDef, sensors: readonly Sensor[]): AgentSetup {
+  const drives = Object.keys(def.weights).map(needDrive);
+  return {
+    id,
+    sensors,
+    drives: createArbiter(drives, def.weights, id),
+    urgencies: (belief) => urgencies(drives, def.weights, belief, id),
+    planner: createStubPlanner(id),
+    skills: instinctsOf(def),
+    notes: [],
+    learners: [],
+  };
+}
 
 /** One run of `scenario` with `seed`, ready to tick. */
 export function createRun(scenario: Scenario, content: Content, seed: number): Run {

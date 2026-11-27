@@ -79,6 +79,16 @@ describe("createRun", () => {
     expect(select(parseTrace(kernel.trace.text()), "goal")).toHaveLength(1);
   });
 
+  it("[S-TRACE-4] records each drive's urgency, from the creature's weights, when a goal is chosen", () => {
+    const { kernel } = createRun(pond, content, 1);
+    kernel.tick();
+    const [why] = select(parseTrace(kernel.trace.text()), "drive");
+    const { hunger, sleepiness } = why?.data.urgencies as Record<string, number>;
+    expect(hunger).toBeCloseTo(0.5, 3);
+    expect(sleepiness).toBeCloseTo(0, 3);
+    expect(hunger).toBeGreaterThan(sleepiness ?? 1);
+  });
+
   it("[S-EVAL-1] fires a timed trigger at its time, and logs it", () => {
     const due = 2 * TICKS_PER_SECOND;
     expect(ids(pond, due - 1)).not.toContain("food-3");

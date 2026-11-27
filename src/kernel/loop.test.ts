@@ -35,6 +35,7 @@ const agent = (id: string, over: Partial<AgentSetup> = {}): AgentSetup => ({
   id,
   sensors: [],
   drives: () => wantUp,
+  urgencies: () => new Map(),
   planner: chooseHop,
   skills: [hop],
   notes: [],
@@ -91,7 +92,7 @@ describe("tick order", () => {
     kernel.tick();
     expect(order).toEqual(["sensors", "belief", "drives", "planner", "executor", "learners"]);
     expect(seenByLearner).toEqual([0]);
-    expect(types(kernel)).toEqual(["fact", "goal", "plan", "skill", "action"]);
+    expect(types(kernel)).toEqual(["fact", "drive", "goal", "plan", "skill", "action"]);
 
     order.length = 0;
     kernel.tick();
@@ -159,7 +160,7 @@ describe("planner", () => {
   it("[S-PLAN-1] may choose nothing, and then nothing runs", () => {
     const kernel = kernelWith([agent("a", { planner: () => null })]);
     kernel.tick();
-    expect(types(kernel)).toEqual(["goal"]);
+    expect(types(kernel)).toEqual(["drive", "goal"]);
   });
 
   it("[S-PLAN-1] is not asked while the agent has no goal or is busy with a skill", () => {
@@ -182,7 +183,7 @@ describe("planner", () => {
     kernel.tick();
     const plan = kernel.trace.events.find((event) => event.type === "plan");
     expect(plan?.data).toEqual({ skill: "fly", args: {}, invalid: "no skill called fly" });
-    expect(types(kernel)).toEqual(["goal", "plan"]);
+    expect(types(kernel)).toEqual(["drive", "goal", "plan"]);
   });
 });
 

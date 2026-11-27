@@ -11,8 +11,8 @@ export interface Belief {
   get(key: FactKey): Fact | undefined;
   /** Everything believed, in the order each was first learned. */
   facts(): readonly Fact[];
-  /** Forgets every fact whose ttl has run out by tick `t`. */
-  expire(t: number): void;
+  /** Forgets every fact whose ttl has run out by tick `t`, and says which those were. */
+  expire(t: number): readonly Fact[];
 }
 
 const SEPARATOR = "\u0000";
@@ -40,7 +40,9 @@ export function createBelief(): Belief {
     get: (key) => held.get(keyOf(key)),
     facts: () => [...held.values()],
     expire(t) {
-      for (const [key, fact] of held) if (t > fact.tEvent + fact.ttl) held.delete(key);
+      const gone = [...held].filter(([, fact]) => t > fact.tEvent + fact.ttl);
+      for (const [key] of gone) held.delete(key);
+      return gone.map(([, fact]) => fact);
     },
   };
 }

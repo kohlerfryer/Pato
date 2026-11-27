@@ -31,6 +31,8 @@ export interface AgentSetup {
   readonly sensors: readonly Sensor[];
   /** What the agent wants right now, given what it believes; null when it wants nothing. */
   readonly drives: (belief: Belief, t: number) => Condition | null;
+  /** How urgent each drive is, given what the agent believes. Recorded whenever the goal changes. */
+  readonly urgencies: (belief: Belief) => ReadonlyMap<string, number>;
   readonly planner: Planner;
   readonly skills: readonly Skill[];
   readonly notes: readonly Note[];
@@ -79,7 +81,10 @@ function createAgent(setup: AgentSetup): Agent {
   };
 }
 
-/** Takes the sensed facts into belief, logging each one that tells the agent something new. */
+/**
+ * Takes the sensed facts into belief, logging each one that tells the agent something new, and
+ * each one it forgets.
+ */
 function takeIn(agent: Agent, facts: readonly Fact[], t: number, emit: Log): void {
   for (const fact of facts) {
     const before = agent.belief.get(fact);
@@ -87,13 +92,18 @@ function takeIn(agent: Agent, facts: readonly Fact[], t: number, emit: Log): voi
     const { subject, predicate, object, value, confidence, source } = fact;
     emit("fact", { subject, predicate, object, value, confidence, source });
   }
-  agent.belief.expire(t);
+  for (const { subject, predicate, object } of agent.belief.expire(t))
+    emit("fact", { subject, predicate, object, forgotten: true });
 }
 
-/** Asks the drives what the agent wants. A changed goal is logged, and interrupts the running skill. */
+/**
+ * Asks the drives what the agent wants. A changed goal is logged, along with how urgent each drive
+ * was, and interrupts the running skill.
+ */
 function aim(agent: Agent, t: number, emit: Log): void {
   const goal = agent.setup.drives(agent.belief, t);
   if (JSON.stringify(goal) !== JSON.stringify(agent.goal)) {
+    emit("drive", { urgencies: Object.fromEntries(agent.setup.urgencies(agent.belief)) });
     emit("goal", { goal });
     agent.executor.interrupt("new_goal");
   }

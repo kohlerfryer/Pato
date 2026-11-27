@@ -97,6 +97,14 @@ describe("belief over time", () => {
     expect(belief.facts().map((fact) => fact.object)).toEqual(["c"]);
   });
 
+  it("[S-TRACE-5] hands back the facts it drops, so that forgetting can be recorded", () => {
+    const belief = createBelief();
+    belief.add(near({ object: "b", ttl: 1 }));
+    belief.add(near({ object: "c", ttl: 5 }));
+    expect(belief.expire(12).map((fact) => fact.object)).toEqual(["b"]);
+    expect(belief.expire(13)).toEqual([]);
+  });
+
   it("[S-FACT-3] gives a refreshed fact a fresh ttl", () => {
     const belief = createBelief();
     belief.add(near({ tEvent: 10, ttl: 5 }));

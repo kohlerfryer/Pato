@@ -32,6 +32,7 @@ function worldEvents(predicates: string[], known?: ReadonlySet<string>): unknown
         id: "a",
         sensors: predicates.map(telling),
         drives: () => null,
+        urgencies: () => new Map(),
         planner: () => null,
         skills: [],
         notes: [],

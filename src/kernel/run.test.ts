@@ -32,6 +32,7 @@ const agent = (id: string, over: Partial<AgentSetup> = {}): AgentSetup => ({
   id,
   sensors: [],
   drives: () => wantUp,
+  urgencies: () => new Map(),
   planner: () => ({ skill: "hop", args: {} }),
   skills: [hop],
   notes: [],
