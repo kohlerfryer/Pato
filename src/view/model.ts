@@ -5,6 +5,7 @@
  */
 
 import type { TraceEvent } from "../kernel/trace.ts";
+import { type AgentView, follow } from "./agents.ts";
 import { type Entity, type WorldState, amount } from "../world/state.ts";
 
 interface Bounds {
@@ -34,18 +35,22 @@ interface Shape {
   readonly tall: number;
   readonly level: number;
   readonly label: string;
+  /** Whether some agent believes something about it right now. */
+  readonly known: boolean;
 }
 
-interface AgentView {
+/** How far an agent can see, as the patch of ground around it. */
+interface Sight {
   readonly id: string;
-  /** What it wants, in words, or null when it wants nothing. */
-  readonly goal: string | null;
-  /** What it last decided, said or guessed. */
-  readonly thought: string | null;
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
 }
 
 export interface ViewModel {
   readonly shapes: readonly Shape[];
+  readonly sights: readonly Sight[];
   readonly agents: readonly AgentView[];
 }
 
@@ -97,36 +102,13 @@ export function fit({
   });
 }
 
-/** A goal as the trace holds it, in words: "hunger below 0.2". */
-function goalText(goal: unknown): string | null {
-  if (typeof goal !== "object" || goal === null) return null;
-  const { predicate, object, op, value } = goal as Record<string, unknown>;
-  return [predicate, object, op, value]
-    .filter((part) => part !== undefined)
-    .map(String)
-    .join(" ");
-}
-
-/** A plan as the trace holds it, in words: what was said or guessed, or else the skill chosen. */
-function thoughtText(data: TraceEvent["data"]): string {
-  const spoken = data.say ?? data.guess;
-  if (typeof spoken === "string") return spoken;
-  const args: unknown[] =
-    typeof data.args === "object" && data.args !== null ? Object.values(data.args) : [];
-  return [data.skill, ...args].map(String).join(" ");
-}
-
-/** Each agent's goal and thought, brought up to date with `events`. */
-function follow(previous: readonly AgentView[], events: readonly TraceEvent[]): AgentView[] {
-  const agents = new Map(previous.map((agent) => [agent.id, agent]));
-  for (const { agent: id, type, data } of events) {
-    if (id === null) continue;
-    const known = agents.get(id) ?? { id, goal: null, thought: null };
-    const goal = type === "goal" ? goalText(data.goal) : known.goal;
-    const decided = type === "plan" && data.invalid === undefined;
-    agents.set(id, { id, goal, thought: decided ? thoughtText(data) : known.thought });
-  }
-  return [...agents.values()].sort((a, b) => (a.id < b.id ? -1 : 1));
+/** The ids of everything some agent believes something about, not counting itself. */
+function believedAbout(agents: readonly AgentView[]): Set<string | undefined> {
+  return new Set(
+    agents.flatMap(({ id, beliefs }) =>
+      beliefs.flatMap(({ subject, object }) => [subject, object]).filter((named) => named !== id),
+    ),
+  );
 }
 
 /** The picture for one moment: the world as it stands, and what `events` add to the view before. */
@@ -138,6 +120,7 @@ export function viewModel(input: {
 }): ViewModel {
   const agents = follow(input.previous?.agents ?? [], input.events);
   const acting = new Set(agents.map(({ id }) => id));
+  const known = believedAbout(agents);
   const place = fit(input.frame);
   const farFirst = [...input.world.entities].sort((a, b) => b.position.y - a.position.y);
   const shapes = farFirst.map((entity): Shape => {
@@ -153,7 +136,16 @@ export function viewModel(input: {
       tall: TALL * scale,
       level: entity.level,
       label: String(entity.props.kind ?? entity.id),
+      known: known.has(entity.id),
     };
   });
-  return { shapes, agents };
+  const sights = farFirst
+    .filter((entity) => acting.has(entity.id) && amount(entity, "sight") > 0)
+    .map((entity): Sight => {
+      const { across, up } = seenAt(entity);
+      const { x, y, scale } = place(across, up);
+      const reach = amount(entity, "sight") * scale;
+      return { id: entity.id, x, y, width: reach * 2, height: reach * 2 * SQUASH };
+    });
+  return { shapes, sights, agents };
 }
