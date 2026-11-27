@@ -1,0 +1,30 @@
+{
+  "id": "duck",
+  "speed": 2,
+  "reach": 1,
+  "sight": 12,
+  "weights": { "hunger": 1, "sleepiness": 0.8 },
+  "rates": { "hunger": 0.004, "sleepiness": 0.003 },
+  "instincts": [
+    {
+      "id": "eat",
+      "params": { "food": { "has": ["edible"] } },
+      "pre": [],
+      "effects": [{ "subject": "$self", "predicate": "hunger", "op": "below", "value": 0.2 }],
+      "body": [
+        { "kind": "move_to", "target": "$food" },
+        { "kind": "use", "target": "$food" }
+      ]
+    },
+    {
+      "id": "rest",
+      "params": { "bed": { "has": ["soft"] } },
+      "pre": [],
+      "effects": [{ "subject": "$self", "predicate": "sleepiness", "op": "below", "value": 0.2 }],
+      "body": [
+        { "kind": "move_to", "target": "$bed" },
+        { "kind": "use", "target": "$bed" }
+      ]
+    }
+  ]
+}

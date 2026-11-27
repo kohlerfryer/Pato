@@ -1,0 +1,6 @@
+{
+  "id": "nest",
+  "looks": ["soft"],
+  "props": { "soft": 0.1 },
+  "footprint": { "width": 1.5, "depth": 1.5 }
+}

@@ -1,0 +1,14 @@
+{
+  "properties": {
+    "edible": "Using it removes it and lowers the user's hunger by this much.",
+    "soft": "Using it is resting on it: sleepiness falls by this much each second."
+  },
+  "relations": {
+    "near": "The object is within the agent's reach."
+  },
+  "states": {
+    "hunger": "How hungry the agent is, from 0 to 1.",
+    "sleepiness": "How sleepy the agent is, from 0 to 1.",
+    "level": "How high the agent stands: the ground is 0."
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "id": "food",
+  "looks": ["edible"],
+  "props": { "edible": 0.6 },
+  "footprint": { "width": 0.5, "depth": 0.5 }
+}
