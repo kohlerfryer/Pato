@@ -1,6 +1,6 @@
 /** A fact is one statement an agent's senses make about the world: who, what, how sure, and for how long. */
 
-type EntityId = string;
+export type EntityId = string;
 
 export interface Fact {
   /** Who or what it is about. */
