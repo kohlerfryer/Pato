@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createBelief } from "./belief.ts";
+import { createBelief, forPlanner } from "./belief.ts";
 import type { Fact } from "./fact.ts";
 
 const near = (over: Partial<Fact> = {}): Fact => ({
@@ -102,6 +102,23 @@ describe("belief over time", () => {
     belief.add(near({ tEvent: 10, ttl: 5 }));
     belief.add(near({ tEvent: 14, ttl: 5 }));
     belief.expire(16);
+    expect(belief.facts()).toHaveLength(1);
+  });
+});
+
+describe("forPlanner", () => {
+  it("[S-FACT-4] passes on only facts believed with a confidence of 0.5 or more", () => {
+    const belief = createBelief();
+    belief.add(near({ object: "sure", confidence: 0.9 }));
+    belief.add(near({ object: "edge", confidence: 0.5 }));
+    belief.add(near({ object: "doubtful", confidence: 0.49 }));
+    expect(forPlanner(belief).map((fact) => fact.object)).toEqual(["sure", "edge"]);
+  });
+
+  it("[S-FACT-4] keeps the doubtful fact in belief itself", () => {
+    const belief = createBelief();
+    belief.add(near({ confidence: 0.2 }));
+    expect(forPlanner(belief)).toEqual([]);
     expect(belief.facts()).toHaveLength(1);
   });
 });
