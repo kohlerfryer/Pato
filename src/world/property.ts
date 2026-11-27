@@ -14,6 +14,8 @@ export interface PropertyRule {
     object: Entity,
     strength: boolean | number | string,
   ) => ReturnType<ActionRule>;
+  /** Whether an object with this property, at this value, hides what is behind it. */
+  readonly blocksSight?: (strength: boolean | number | string) => boolean;
 }
 
 /** Every property's rule, by property name. Adding a module to `rules/` is all it takes to add one. */

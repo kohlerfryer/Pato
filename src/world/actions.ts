@@ -2,12 +2,11 @@
 
 import type { Action } from "../agent/action.ts";
 import { TICKS_PER_SECOND } from "../kernel/clock.ts";
+import { CLOSE_ENOUGH, radius, withinReach } from "./geometry.ts";
 import { type PropertyRule, propertyRules } from "./property.ts";
 import { type Entity, type WorldState, amount, find, withEntity } from "./state.ts";
 import type { ActionRule } from "./step.ts";
 
-/** Closer than this counts as arrived, so rounding never costs a tick. */
-const CLOSE_ENOUGH = 1e-9;
 const UNREACHABLE = { status: "failed", reason: "unreachable" } as const;
 const DONE = { status: "done" } as const;
 
@@ -25,8 +24,7 @@ function aimAt(state: WorldState, actor: Entity, target: Target): Aim | undefine
   if (typeof target !== "string") return { ...target, level: actor.level, radius: 0 };
   const entity = find(state, target);
   if (!entity) return undefined;
-  const radius = Math.max(amount(entity, "width"), amount(entity, "depth")) / 2;
-  return { ...entity.position, level: entity.level, radius };
+  return { ...entity.position, level: entity.level, radius: radius(entity) };
 }
 
 /** Walks the actor toward its target at its speed, and is done once the target is within reach. */
@@ -49,16 +47,6 @@ const failed = (state: WorldState, reason: string): ReturnType<ActionRule> => ({
   state,
   outcome: { status: "failed", reason },
 });
-
-/** Whether `object` is close enough for `actor` to use, measured from the object's edge. */
-function withinReach(actor: Entity, object: Entity): boolean {
-  const radius = Math.max(amount(object, "width"), amount(object, "depth")) / 2;
-  const apart = Math.hypot(
-    object.position.x - actor.position.x,
-    object.position.y - actor.position.y,
-  );
-  return apart - radius - amount(actor, "reach") <= CLOSE_ENOUGH;
-}
 
 /** The object an actor's `use` is aimed at: the one named, or else the one held. */
 function aimedAt(state: WorldState, actor: Entity, target: string | undefined): Entity | undefined {
