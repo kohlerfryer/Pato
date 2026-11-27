@@ -3,7 +3,7 @@
 import type { Action, Outcome } from "../agent/action.ts";
 import type { EntityId } from "../agent/fact.ts";
 import { grow } from "./needs.ts";
-import { type WorldState, frozen } from "./state.ts";
+import { type Entity, type WorldState, frozen } from "./state.ts";
 
 /**
  * Carries one actor's action forward by a tick. Returns the next state, and how the action ended
@@ -34,16 +34,18 @@ function returned(state: WorldState): WorldState {
 }
 
 /**
- * Brings back what is due, applies each actor's action in actor id order, so a run never depends
+ * Brings back what is due, adds what is arriving, applies each actor's action in actor id order, so a run never depends
  * on who asked first, then lets every need grow by a tick.
  */
 export function step(
   state: WorldState,
   requests: ReadonlyMap<EntityId, Action>,
   rules: ActionRules,
+  arriving: readonly Entity[] = [],
 ): Stepped {
   const outcomes = new Map<EntityId, Outcome>();
   let next = returned(state);
+  if (arriving.length > 0) next = { ...next, entities: [...next.entities, ...arriving] };
   for (const actor of [...requests.keys()].sort()) {
     const action = requests.get(actor);
     if (!action) continue;

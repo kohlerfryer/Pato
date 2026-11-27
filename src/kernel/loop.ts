@@ -12,7 +12,7 @@ import type { EntityId, Fact } from "../agent/fact.ts";
 import { type Registry, createRegistry } from "../agent/registry.ts";
 import type { Skill } from "../agent/skill.ts";
 import type { Note, PlanOutput, Planner } from "../planner/planner.ts";
-import type { WorldState } from "../world/state.ts";
+import type { Entity, WorldState } from "../world/state.ts";
 import { step } from "../world/step.ts";
 import { createClock } from "./clock.ts";
 import { type Random, createStreams } from "./random.ts";
@@ -141,6 +141,8 @@ interface KernelSetup {
   readonly agents: readonly AgentSetup[];
   /** The predicates the vocabulary lists. One that is missing is believed all the same, and reported once. */
   readonly known?: ReadonlySet<string>;
+  /** What appears in the world at tick `t`, if anything. */
+  readonly arrivals?: (t: number) => readonly Entity[];
 }
 
 /** Everything one run holds between ticks. */
@@ -181,8 +183,11 @@ function runTick(run: Run): void {
     (type, data) =>
       events.push({ t, agent: id, type, data });
 
-  const stepped = step(run.world, run.requests, run.setup.rules);
+  const arriving = run.setup.arrivals?.(t) ?? [];
+  const stepped = step(run.world, run.requests, run.setup.rules, arriving);
   run.world = stepped.state;
+  if (arriving.length > 0)
+    events.push({ t, agent: null, type: "world", data: { arrived: arriving.map(({ id }) => id) } });
   const sensed = sense(run, t, events);
   agents.forEach((agent, i) => {
     takeIn(agent, sensed[i] ?? [], t, emitFor(agent));
