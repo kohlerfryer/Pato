@@ -9,3 +9,10 @@ export interface Condition {
   readonly op: "is" | "below" | "above";
   readonly value: boolean | number | string;
 }
+
+const NAME_MARK = "$";
+
+/** The name a term asks to have filled in (`food` for `$food`), or null if it is a plain entity id. */
+export function nameIn(term: string): string | null {
+  return term.startsWith(NAME_MARK) ? term.slice(NAME_MARK.length) : null;
+}

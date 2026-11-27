@@ -78,3 +78,40 @@ describe("matches", () => {
     expect(matches(belief, "nobody", { has: [] })).toBe(false);
   });
 });
+
+describe("registry rejects", () => {
+  const withBody = (body: unknown): Skill => ({ ...eat, body: body as Skill["body"] });
+
+  it("[S-REG-2] turns away a body step that isn't one of the five actions", () => {
+    const registry = createRegistry();
+    expect(registry.register(withBody([{ kind: "fly", target: "$food" }]))).toContain("fly");
+    expect(registry.get("eat")).toBeUndefined();
+  });
+
+  it("[S-REG-2] turns away a target that names an entity instead of a parameter", () => {
+    expect(createRegistry().register(withBody([{ kind: "grab", target: "obj-3" }]))).toContain(
+      "obj-3",
+    );
+  });
+
+  it("[S-REG-2] turns away a target that names a parameter the skill doesn't have", () => {
+    expect(createRegistry().register(withBody([{ kind: "use", target: "$other" }]))).toContain(
+      "$other",
+    );
+  });
+
+  it("[S-REG-2] turns away a target that is a fixed spot", () => {
+    expect(
+      createRegistry().register(withBody([{ kind: "move_to", target: { x: 1, y: 2 } }])),
+    ).not.toBeNull();
+  });
+
+  it("[S-REG-2] takes actions that need no target", () => {
+    const body = [{ kind: "jump" }, { kind: "drop" }, { kind: "use" }];
+    expect(createRegistry().register(withBody(body))).toBeNull();
+  });
+
+  it("[S-REG-2] names the skill it turned away", () => {
+    expect(createRegistry().register(withBody([{ kind: "fly" }]))).toContain("eat");
+  });
+});
