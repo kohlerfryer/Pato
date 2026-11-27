@@ -81,6 +81,7 @@ describe("a run", () => {
   it("[S-WORLD-1] keeps the world the step function last returned", () => {
     const lift: ActionRule = (state, actor) => ({
       state: {
+        ...state,
         entities: state.entities.map((entity) =>
           entity.id === actor ? { ...entity, level: entity.level + 1 } : entity,
         ),

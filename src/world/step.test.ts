@@ -14,6 +14,7 @@ const thing = (id: string, x = 0): Entity => ({
 /** A stand-in rule: an entity that jumps goes up one level and is done. */
 const rise: ActionRule = (state, actor) => ({
   state: {
+    ...state,
     entities: state.entities.map((entity) =>
       entity.id === actor ? { ...entity, level: entity.level + 1 } : entity,
     ),

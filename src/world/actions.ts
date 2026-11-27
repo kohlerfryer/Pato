@@ -2,6 +2,7 @@
 
 import type { Action } from "../agent/action.ts";
 import { TICKS_PER_SECOND } from "../kernel/clock.ts";
+import { type PropertyRule, propertyRules } from "./property.ts";
 import { type Entity, type WorldState, amount, find, withEntity } from "./state.ts";
 import type { ActionRule } from "./step.ts";
 
@@ -43,3 +44,50 @@ export const moveTo: ActionRule = (state, actorId, action) => {
   const next = withEntity(state, { ...actor, position });
   return gap - stride <= CLOSE_ENOUGH ? { state: next, outcome: DONE } : { state: next };
 };
+
+const failed = (state: WorldState, reason: string): ReturnType<ActionRule> => ({
+  state,
+  outcome: { status: "failed", reason },
+});
+
+/** Whether `object` is close enough for `actor` to use, measured from the object's edge. */
+function withinReach(actor: Entity, object: Entity): boolean {
+  const radius = Math.max(amount(object, "width"), amount(object, "depth")) / 2;
+  const apart = Math.hypot(
+    object.position.x - actor.position.x,
+    object.position.y - actor.position.y,
+  );
+  return apart - radius - amount(actor, "reach") <= CLOSE_ENOUGH;
+}
+
+/** The object an actor's `use` is aimed at: the one named, or else the one held. */
+function aimedAt(state: WorldState, actor: Entity, target: string | undefined): Entity | undefined {
+  const id = target ?? actor.props.holding;
+  return typeof id === "string" ? find(state, id) : undefined;
+}
+
+/**
+ * Uses an object: the one named, if it is within reach, or else the one held. What happens is up
+ * to the object's properties, and the first one, by name, that can be used decides.
+ */
+export function createUse(rules: ReadonlyMap<string, PropertyRule>): ActionRule {
+  return (state, actorId, action) => {
+    const actor = find(state, actorId);
+    if (!actor || action.kind !== "use") return failed(state, "nothing_to_use");
+    const object = aimedAt(state, actor, action.target);
+    if (!object) return failed(state, "nothing_to_use");
+    if (action.target !== undefined && !withinReach(actor, object)) return failed(state, "too_far");
+    for (const [name, strength] of Object.entries(object.props).sort(([a], [b]) =>
+      a < b ? -1 : 1,
+    )) {
+      const use = rules.get(name)?.use;
+      if (use) return use(state, actor, object, strength);
+    }
+    return failed(state, "no_effect");
+  };
+}
+
+/** The rule for every action the world knows how to carry out. */
+export function actionRules(): Record<"move_to" | "use", ActionRule> {
+  return { move_to: moveTo, use: createUse(propertyRules()) };
+}

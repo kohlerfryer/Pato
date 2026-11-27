@@ -13,22 +13,33 @@ export interface Entity {
 
 export interface WorldState {
   readonly entities: readonly Entity[];
+  /** Things that were used up and are on their way back, with the ticks left until they return. */
+  readonly away: readonly { readonly entity: Entity; readonly ticks: number }[];
+  /** How many ticks a used-up thing stays away. Zero means it never comes back. */
+  readonly respawn: number;
 }
+
+const frozenEntity = (entity: Entity): Entity =>
+  Object.freeze({
+    ...entity,
+    position: Object.freeze({ ...entity.position }),
+    props: Object.freeze({ ...entity.props }),
+  });
 
 /** A copy of `state` that throws if anything tries to change it. */
 export function frozen(state: WorldState): WorldState {
-  const entities = state.entities.map((entity) =>
-    Object.freeze({
-      ...entity,
-      position: Object.freeze({ ...entity.position }),
-      props: Object.freeze({ ...entity.props }),
-    }),
+  const away = state.away.map(({ entity, ticks }) =>
+    Object.freeze({ entity: frozenEntity(entity), ticks }),
   );
-  return Object.freeze({ entities: Object.freeze(entities) });
+  return Object.freeze({
+    entities: Object.freeze(state.entities.map(frozenEntity)),
+    away: Object.freeze(away),
+    respawn: state.respawn,
+  });
 }
 
-export function createWorld(entities: readonly Entity[]): WorldState {
-  return frozen({ entities });
+export function createWorld(entities: readonly Entity[], respawn = 0): WorldState {
+  return frozen({ entities, away: [], respawn });
 }
 
 export function find(state: WorldState, id: EntityId): Entity | undefined {
