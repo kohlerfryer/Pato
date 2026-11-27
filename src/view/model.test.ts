@@ -20,6 +20,8 @@ const food: Entity = {
   props: { kind: "food", width: 2, depth: 1 },
 };
 const world = createWorld([food, duck]);
+const box = { id: "food-1", shape: "box", level: 0, label: "food" };
+const circle = { id: "duck-1", shape: "circle", level: 1, label: "duck" };
 const frame: Frame = {
   bounds: { minX: -10, minY: -5, maxX: 10, maxY: 5 },
   viewport: { width: 400, height: 200 },
@@ -68,28 +70,35 @@ describe("fit", () => {
     expect(place(-10, 0).x).toBe(0);
   });
 
-  it("[S-DRAW-3] takes its bounds from where things are, with room around them", () => {
-    expect(boundsOf(world, 2)).toEqual({ minX: -2, minY: -2, maxX: 12, maxY: 7 });
+  it("[S-DRAW-3] takes its bounds from where things appear at an angle, with room around them", () => {
+    expect(boundsOf(world, 2)).toEqual({ minX: -2, minY: -2, maxX: 12, maxY: 5 });
     expect(boundsOf(createWorld([]), 2)).toEqual({ minX: -2, minY: -2, maxX: 2, maxY: 2 });
   });
 });
 
 describe("viewModel", () => {
-  it("[S-DRAW-2] gives each entity a shape, a position, a level and a label", () => {
+  it("[S-DRAW-2] sees the ground at an angle: farther is higher and squashed, and a level lifts", () => {
     const { shapes } = viewModel({ world, events: [event("goal", { goal: hungry })], frame });
     expect(shapes).toEqual([
-      { id: "food-1", shape: "box", x: 400, y: 0, width: 40, height: 20, level: 0, label: "food" },
-      {
-        id: "duck-1",
-        shape: "circle",
-        x: 200,
-        y: 100,
-        width: 20,
-        height: 20,
-        level: 1,
-        label: "duck",
-      },
+      { ...box, x: 400, y: 50, width: 40, height: 10, tall: 10 },
+      { ...circle, x: 200, y: 80, width: 20, height: 10, tall: 10 },
     ]);
+  });
+
+  it("[S-DRAW-2] lifts a thing by one unit for each level it is on", () => {
+    const grounded = createWorld([food, { ...duck, level: 0 }]);
+    const [, low] = viewModel({ world: grounded, events: [], frame }).shapes;
+    const [, high] = viewModel({ world, events: [], frame }).shapes;
+    expect((low?.y ?? 0) - (high?.y ?? 0)).toBe(20);
+    expect(low?.x).toBe(high?.x);
+  });
+
+  it("[S-DRAW-2] lists shapes from far to near, so nearer things are drawn over farther ones", () => {
+    const behind: Entity = { ...food, id: "food-2", position: { x: 0, y: 8 } };
+    const front: Entity = { ...food, id: "food-3", position: { x: 0, y: -8 } };
+    const mixed = createWorld([front, duck, behind, food]);
+    const ids = viewModel({ world: mixed, events: [], frame }).shapes.map(({ id }) => id);
+    expect(ids).toEqual(["food-2", "food-1", "duck-1", "food-3"]);
   });
 
   it("[S-DRAW-2] draws as a circle whatever acts, and as a box whatever doesn't", () => {

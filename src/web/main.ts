@@ -17,7 +17,10 @@ const MAX_CATCH_UP = 5;
 const MS_PER_TICK = 1000 / TICKS_PER_SECOND;
 const LABEL_PX = 12;
 const INK = "#5b3d1f";
-const BOX = "#c9a66b";
+const BOX = "#d9b97f";
+const FRONT = "#b08a4f";
+const FIELD = "#dcebb5";
+const SHADE = "rgba(60, 40, 10, 0.18)";
 const CIRCLE = "#f2c14e";
 
 /** Makes the canvas as sharp as the screen allows. Returns how many canvas pixels make one screen pixel. */
@@ -33,18 +36,31 @@ function sharpen(canvas: HTMLCanvasElement): number {
 }
 
 function draw(context: CanvasRenderingContext2D, view: ViewModel, ratio: number): void {
-  context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+  context.fillStyle = FIELD;
+  context.fillRect(0, 0, context.canvas.width, context.canvas.height);
   context.font = `${String(LABEL_PX * ratio)}px system-ui, sans-serif`;
   context.textAlign = "center";
-  for (const { shape, x, y, width, height, level, label } of view.shapes) {
-    context.fillStyle = shape === "circle" ? CIRCLE : BOX;
+  for (const { shape, x, y, width, height, tall, level, label } of view.shapes) {
+    const left = x - width / 2;
+    const near = y + height / 2;
     context.beginPath();
-    if (shape === "circle") context.arc(x, y, width / 2, 0, Math.PI * 2);
-    else context.rect(x - width / 2, y - height / 2, width, height);
+    if (shape === "circle") {
+      context.fillStyle = SHADE;
+      context.ellipse(x, y, width / 2, height / 2, 0, 0, Math.PI * 2);
+      context.fill();
+      context.beginPath();
+      context.fillStyle = CIRCLE;
+      context.arc(x, y - width / 2, width / 2, 0, Math.PI * 2);
+    } else {
+      context.fillStyle = FRONT;
+      context.fillRect(left, near - tall, width, tall);
+      context.fillStyle = BOX;
+      context.rect(left, y - height / 2 - tall, width, height);
+    }
     context.fill();
     context.fillStyle = INK;
     const text = level > 0 ? `${label} (up ${String(level)})` : label;
-    context.fillText(text, x, y + height / 2 + LABEL_PX * ratio * 1.2);
+    context.fillText(text, x, near + LABEL_PX * ratio * 1.2);
   }
 }
 

@@ -1,10 +1,11 @@
 /**
- * What to draw, as plain data. The page turns this into pixels and nothing else, so everything
- * worth testing about the picture is decided here.
+ * What to draw, as plain data: the world seen at an angle from above. Farther away is higher up
+ * the screen and squashed, and each level lifts a thing straight up. The page turns this into
+ * pixels and nothing else, so everything worth testing about the picture is decided here.
  */
 
 import type { TraceEvent } from "../kernel/trace.ts";
-import { type WorldState, amount } from "../world/state.ts";
+import { type Entity, type WorldState, amount } from "../world/state.ts";
 
 interface Bounds {
   readonly minX: number;
@@ -23,11 +24,14 @@ interface Shape {
   readonly id: string;
   /** Whatever acts is a circle. Everything else is a box. */
   readonly shape: "circle" | "box";
-  /** Its centre, in screen pixels. */
+  /** The centre of the patch of ground it covers, in screen pixels. */
   readonly x: number;
   readonly y: number;
+  /** The size of that patch as it appears: full width, squashed depth. */
   readonly width: number;
   readonly height: number;
+  /** How far it stands up from that patch, in pixels. */
+  readonly tall: number;
   readonly level: number;
   readonly label: string;
 }
@@ -45,23 +49,36 @@ export interface ViewModel {
   readonly agents: readonly AgentView[];
 }
 
-/** How big to draw something that has no footprint of its own, in world units. */
+/** How wide and deep to draw something that has no footprint of its own, in world units. */
 const DEFAULT_SIZE = 1;
+/** How tall everything stands. Nothing says how tall a thing is yet. */
+const TALL = 0.5;
+/** How much a step away from the viewer moves a thing up the screen, against a step sideways. */
+const SQUASH = 0.5;
+/** How far up the screen one level lifts a thing, in world units. */
+const LIFT = 1;
 
-/** The box around every entity's centre, with `margin` of room on each side. */
+/** Where an entity's centre appears before scaling: across, and up the screen. */
+const seenAt = (entity: Entity): { across: number; up: number } => ({
+  across: entity.position.x,
+  up: entity.position.y * SQUASH + entity.level * LIFT,
+});
+
+/** The box around everything as it appears at an angle, with `margin` of room on each side. */
 export function boundsOf(world: WorldState, margin: number): Bounds {
-  const xs = world.entities.map((entity) => entity.position.x);
-  const ys = world.entities.map((entity) => entity.position.y);
+  const seen = world.entities.map(seenAt);
+  const xs = seen.map(({ across }) => across);
+  const ys = seen.map(({ up }) => up);
   return {
     minX: Math.min(0, ...xs) - margin,
     minY: Math.min(0, ...ys) - margin,
     maxX: Math.max(0, ...xs) + margin,
-    maxY: Math.max(0, ...ys) + margin,
+    maxY: Math.max(0, ...ys.map((up) => up + TALL)) + margin,
   };
 }
 
 /**
- * Places a world point on the screen: the whole frame fits, centred, at one scale for both axes,
+ * Places a point as it appears (across, up) on the screen: the whole frame fits, centred, at one scale for both axes,
  * with up at the top.
  */
 export function fit({
@@ -122,15 +139,18 @@ export function viewModel(input: {
   const agents = follow(input.previous?.agents ?? [], input.events);
   const acting = new Set(agents.map(({ id }) => id));
   const place = fit(input.frame);
-  const shapes = input.world.entities.map((entity): Shape => {
-    const { x, y, scale } = place(entity.position.x, entity.position.y);
+  const farFirst = [...input.world.entities].sort((a, b) => b.position.y - a.position.y);
+  const shapes = farFirst.map((entity): Shape => {
+    const { across, up } = seenAt(entity);
+    const { x, y, scale } = place(across, up);
     return {
       id: entity.id,
       shape: acting.has(entity.id) ? "circle" : "box",
       x,
       y,
       width: (amount(entity, "width") || DEFAULT_SIZE) * scale,
-      height: (amount(entity, "depth") || DEFAULT_SIZE) * scale,
+      height: (amount(entity, "depth") || DEFAULT_SIZE) * SQUASH * scale,
+      tall: TALL * scale,
       level: entity.level,
       label: String(entity.props.kind ?? entity.id),
     };
