@@ -2,7 +2,7 @@
 
 A small 2D world with a duck that has its own drives, explores whatever appears, and learns what it can do and what makes kids laugh. Nothing it does with a specific object is scripted, and it runs on one laptop.
 
-Status: phase 1 of 7. See [`docs/phases.md`](docs/phases.md).
+Status: phase 2 of 7. See [`docs/phases.md`](docs/phases.md).
 
 ## Read first
 
