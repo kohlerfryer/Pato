@@ -14,7 +14,7 @@
 | Thompson sampling with an attribution window      | `game/src/plugins/brains/bandit/`                                            | S-LEARN-3 to S-LEARN-5 |
 | Guardian: line limits, blocklist, vetted requests | `game/src/kernel/guardian/`, `shared/blocklist.json`, `shared/requests.json` | S-SAY-1                |
 | Recorded model replies and drift detection        | `scripts/cassettes.py`, `server/tests/cassettes/`                            | S-LLM-4                |
-| Layered puppet and pond drawing                   | `game/src/render/`                                                           | S-DRAW-1               |
+| Layered puppet and pond drawing                   | `game/src/render/`                                                           | S-DRAW-7               |
 | Smile, gesture and pose senses                    | `game/src/plugins/sense/`                                                    | S-REAL-1               |
 
 Port means read it, take the idea and any code that fits a spec item, and bring it in test first like anything else. Nothing is copied in bulk.
