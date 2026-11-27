@@ -23,9 +23,19 @@ interface Stepped {
   readonly outcomes: ReadonlyMap<EntityId, Outcome>;
 }
 
+/** `state` with whatever was due back this tick returned, and the rest a tick closer. */
+function returned(state: WorldState): WorldState {
+  if (state.away.length === 0) return state;
+  const back = state.away.filter(({ ticks }) => ticks <= 1).map(({ entity }) => entity);
+  const away = state.away
+    .filter(({ ticks }) => ticks > 1)
+    .map(({ entity, ticks }) => ({ entity, ticks: ticks - 1 }));
+  return { ...state, entities: [...state.entities, ...back], away };
+}
+
 /**
- * Applies each actor's action, in actor id order so a run never depends on who asked first, then
- * lets every need grow by a tick.
+ * Brings back what is due, applies each actor's action in actor id order, so a run never depends
+ * on who asked first, then lets every need grow by a tick.
  */
 export function step(
   state: WorldState,
@@ -33,7 +43,7 @@ export function step(
   rules: ActionRules,
 ): Stepped {
   const outcomes = new Map<EntityId, Outcome>();
-  let next = state;
+  let next = returned(state);
   for (const actor of [...requests.keys()].sort()) {
     const action = requests.get(actor);
     if (!action) continue;
