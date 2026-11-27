@@ -16,6 +16,8 @@ These are places where a spec item left room, and what was chosen. Each is for t
 - **Using something with no usable property fails with `no_effect`.** When several properties could be used, the first by name decides.
 - **`move_to` a target that is missing fails with `unreachable`**, the same as one on another level.
 
+- **Resting on a soft thing moves the agent onto it.** The spec says it rests on it, and standing beside a nest to sleep looked wrong.
+
 ## Senses
 
 - **Sight says whether each thing in view is near, true or false**, and tells the properties in its kind's `looks`. What was seen stays believed for one second after it was last seen.

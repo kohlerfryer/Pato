@@ -100,6 +100,11 @@ describe("soft", () => {
     expect(level(idle(rested, 10), "sleepiness")).toBe(level(rested, "sleepiness"));
   });
 
+  it("[S-WORLD-4] puts the agent on the thing it rests on", () => {
+    const { world } = useOnce(createWorld([duck({ sleepiness: 0.5 }), nest]));
+    expect(world.entities[0]?.position).toEqual(nest.position);
+  });
+
   it("[S-WORLD-4] leaves the nest where it is", () => {
     expect(ids(useOnce(createWorld([duck({ sleepiness: 0.5 }), nest])).world)).toEqual(["a", "b"]);
   });
