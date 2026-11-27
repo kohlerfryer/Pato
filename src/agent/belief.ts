@@ -52,3 +52,10 @@ const PLANNER_CONFIDENCE = 0.5;
 export function forPlanner(belief: Belief): readonly Fact[] {
   return belief.facts().filter((fact) => fact.confidence >= PLANNER_CONFIDENCE);
 }
+
+/** A belief holding exactly `facts`. */
+export function believing(facts: readonly Fact[]): Belief {
+  const belief = createBelief();
+  for (const fact of facts) belief.add(fact);
+  return belief;
+}
