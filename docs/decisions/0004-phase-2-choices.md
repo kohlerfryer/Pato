@@ -15,3 +15,25 @@ These are places where a spec item left room, and what was chosen. Each is for t
 - **Reach is measured from an object's edge**, taken as half the longer side of its footprint.
 - **Using something with no usable property fails with `no_effect`.** When several properties could be used, the first by name decides.
 - **`move_to` a target that is missing fails with `unreachable`**, the same as one on another level.
+
+## Senses
+
+- **Sight says whether each thing in view is near, true or false**, and tells the properties in its kind's `looks`. What was seen stays believed for one second after it was last seen.
+- **Line of sight is decided by property rules.** A rule can say its property blocks the view. None does yet, so nothing hides anything until walls arrive in phase 3.
+- **An entity carries its kind as a property**, and sight looks up that kind's `looks`.
+
+## Drives and planning
+
+- **A need is met below 0.2**, and wanted again as soon as it passes 0.2. There is no separate level at which wanting starts, so the duck tops up often.
+- **The hysteresis margin is 0.1.**
+- **An interruption waits for the action in flight to end.** A rest in progress is finished, not cut short.
+- **The stub planner prefers a skill that can run now** over one it would have to chain toward, then breaks ties by skill id and entity id.
+- **A planner is made per agent**, because the planner's input does not say which agent it is for.
+
+## Evals
+
+- **Scenario 1 keeps everything within sight.** The duck forgets what it can't see after a second, and remembering where things were is a phase 3 item. A wider world would leave it stuck.
+- **Scenario 1 has three seeds, and they give identical runs**, because nothing in phase 2 is random yet.
+- **The eval report is one JSON file per scenario** under `.quality/evals/`.
+- **A scenario test may contain no number at all** outside quoted text. That is how "no thresholds of their own" is checked.
+- **Measured for scenario 1:** both needs below 0.8 on every tick, 3.97 goal switches per minute against a limit of 6, and thirty simulated minutes in under a second.
