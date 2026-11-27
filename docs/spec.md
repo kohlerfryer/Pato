@@ -186,7 +186,7 @@ interface PlanOutput {
   skill: string;
   args: Record<string, EntityId>;
   guess?: string; // what it expects to happen, shown as a thought
-  say?: string;
+  say?: string; // what it tells a kid, also shown as a thought bubble
 }
 
 type Planner = (input: PlanInput) => PlanOutput | null | Promise<PlanOutput | null>;
@@ -281,7 +281,9 @@ A simulated kid is a sensor with a hidden taste vector p. It is the stand-in for
 - **S-SIM-3** (R-04, phase 4): It leaves after 60 seconds without laughing, after which `kid_visible` expires.
 - **S-SIM-4** (R-05, phase 4): A persona is a data file, and its taste vector is not importable from `src/agent/`, `src/planner/` or `src/learners/`.
 
-## Speech
+## Thought bubbles
+
+The duck has no spoken voice. Its guesses, refusals and requests for help appear as thought bubbles.
 
 - **S-SAY-1** (R-19, phase 4): Text a planner returns as `say` or `guess` is shown only if it has 12 words or fewer and contains no blocked word; otherwise it is dropped and the drop is logged.
 
@@ -309,9 +311,9 @@ The model server runs on the Mac itself and is reached over HTTP. In CI its repl
 
 ## Open decisions
 
-These are settled by the owner. Until then the default stands.
+These are settled by the owner. Until then the default stands. Settled so far: the duck tries ideas for real in the world instead of rehearsing them, it is born with two instincts (eating and resting), and it shows thought bubbles instead of speaking.
 
-1. **How the stub solves the roof (S-PLAN-7).** Default: real attempts in the world, pruned by notes. The alternative is rehearsing candidates in a forked copy of the world first. This is unproven, so phase 5 starts with two or three candidate designs compared on scenario 7.
+1. **How the stub proposes candidates for the roof (S-PLAN-7).** Candidates are tried for real in the world, and each failure becomes a note. How the stub planner comes up with candidates good enough to succeed within 10 attempts is unproven, so phase 5 starts with two or three candidate designs compared on scenario 7.
 2. **Conflicting facts (S-FACT-2).** Default: the later fact wins. Revisit in phase 6 if noise makes the duck flicker.
 3. **Held-out scenarios.** Anything in this repository is visible to the building agent, so held-out variants live on the owner's machine or in a separate private repository.
 4. **Content format.** JSON, validated by hand-written checks, so no dependency is needed yet.

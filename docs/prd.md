@@ -48,7 +48,7 @@ The previous attempt, `puddles`, was a reaction machine: a kid held something up
 - **R-16** (phase 3): No object, scenario or personality is special-cased by name in engine, planner or skill code.
 - **R-17** (phase 5): A local language model can serve as the planner within budget: at most one call every 3 seconds per agent and prompts under 1,500 tokens.
 - **R-18** (phase 1): Every planner output is validated. An invalid one never reaches the world.
-- **R-19** (phase 4): Everything the duck says or thinks aloud passes a child-appropriate check.
+- **R-19** (phase 4): The duck has no spoken voice. What it thinks or wants to tell a kid appears as a thought bubble, and every bubble passes a child-appropriate check.
 - **R-20** (phase 2): The headless simulation is fast enough that the whole stub eval suite runs in about a minute.
 - **R-21** (phase 7): Real senses (camera, speech, laughter) run on the machine and feed the same facts as the simulated ones. No image or audio is kept.
 - **R-22** (phase 7): The world is drawn on screen from world state. Drawing never changes the simulation.
@@ -88,5 +88,4 @@ The previous attempt, `puddles`, was a reaction machine: a kid held something up
 ## Open questions
 
 - Which local models, once measured on the target machine?
-- Does the duck speak aloud, or only show thought bubbles?
 - How are held-out scenarios kept out of the building agent's sight? See `spec.md`, open decisions.
