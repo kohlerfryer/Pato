@@ -44,3 +44,11 @@ export function createBelief(): Belief {
     },
   };
 }
+
+/** Below this confidence a fact is still believed, but the planner is not told. */
+const PLANNER_CONFIDENCE = 0.5;
+
+/** The believed facts sure enough to plan on. */
+export function forPlanner(belief: Belief): readonly Fact[] {
+  return belief.facts().filter((fact) => fact.confidence >= PLANNER_CONFIDENCE);
+}
