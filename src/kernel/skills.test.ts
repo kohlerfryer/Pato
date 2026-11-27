@@ -53,6 +53,7 @@ function running(over: Partial<AgentSetup>, jump: ActionRule, ticks: number): Ke
         id: "a",
         sensors: [feel],
         drives: () => up,
+        urgencies: () => new Map(),
         planner: () => ({ skill: "hop", args: {} }),
         skills: [hop(1)],
         notes: [],
