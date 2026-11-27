@@ -72,3 +72,36 @@ describe("belief", () => {
     expect(belief.facts()).toEqual([]);
   });
 });
+
+describe("belief over time", () => {
+  it("[S-FACT-3] still believes a fact on the last tick of its ttl", () => {
+    const belief = createBelief();
+    belief.add(near({ tEvent: 10, ttl: 30 }));
+    belief.expire(40);
+    expect(belief.facts()).toHaveLength(1);
+  });
+
+  it("[S-FACT-3] drops a fact on the first tick after tEvent plus ttl", () => {
+    const belief = createBelief();
+    belief.add(near({ tEvent: 10, ttl: 30 }));
+    belief.expire(41);
+    expect(belief.facts()).toEqual([]);
+    expect(belief.get(near())).toBeUndefined();
+  });
+
+  it("[S-FACT-3] drops only the facts that have run out", () => {
+    const belief = createBelief();
+    belief.add(near({ object: "b", ttl: 1 }));
+    belief.add(near({ object: "c", ttl: 5 }));
+    belief.expire(12);
+    expect(belief.facts().map((fact) => fact.object)).toEqual(["c"]);
+  });
+
+  it("[S-FACT-3] gives a refreshed fact a fresh ttl", () => {
+    const belief = createBelief();
+    belief.add(near({ tEvent: 10, ttl: 5 }));
+    belief.add(near({ tEvent: 14, ttl: 5 }));
+    belief.expire(16);
+    expect(belief.facts()).toHaveLength(1);
+  });
+});
