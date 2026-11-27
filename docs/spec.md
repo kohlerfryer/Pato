@@ -137,6 +137,8 @@ type EventType = "fact" | "drive" | "goal" | "plan" | "skill" | "action" | "lear
 - **S-TRACE-1** (R-13, phase 1): The trace is JSON Lines: a header with schema, seed and scenario, then events with t, agent, type and data, in tick order.
 - **S-TRACE-2** (R-13, phase 1): The event types are `fact`, `drive`, `goal`, `plan`, `skill`, `action`, `learn` and `world`; appending any other type throws.
 - **S-TRACE-3** (R-13, phase 1): Eval helpers take a parsed trace as their only input.
+- **S-TRACE-4** (R-31, phase 2): When an agent's goal changes, a `drive` event records the urgency of each of its drives on that tick.
+- **S-TRACE-5** (R-31, phase 2): When a fact leaves an agent's belief, a `fact` event records it as forgotten.
 
 ## World
 
@@ -316,6 +318,8 @@ A plain viewer makes every phase watchable from phase 2 on, in any browser, incl
 - **S-DRAW-4** (R-29, phase 2): The page takes its scenario and seed from its address, and with none given runs the first scenario in `content/scenarios/` with seed 1.
 - **S-DRAW-5** (R-29, phase 2): Nothing the page loads imports a Node built-in, so the build runs from static files alone.
 - **S-DRAW-6** (R-22, phase 2): Only code under `src/web/` touches the page or its canvas, and no other code imports from `src/web/`.
+- **S-INSPECT-1** (R-31, phase 2): From trace events alone, the view model gives for each agent what it believes now with each fact's source, the urgency of each drive at its last goal change, and its skill and action in progress with the reason for its last failure.
+- **S-INSPECT-2** (R-31, phase 2): The view model marks how far each agent can see and which entities it believes something about.
 
 ## Real senses and character drawing
 

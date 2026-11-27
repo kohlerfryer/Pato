@@ -56,6 +56,7 @@ The previous attempt, `puddles`, was a reaction machine: a kid held something up
 - **R-24** (phase 2): Each requirement about the duck's behaviour is proven by a scenario that runs headless in CI, against thresholds only the owner changes.
 - **R-29** (phase 2): Every merge to `main` publishes the latest build to a web address, so testing it needs no install and no app store.
 - **R-30** (phase 7): The duck is drawn as a character with expressions, in place of the viewer's plain shapes.
+- **R-31** (phase 2): The viewer can show, for any agent, what it believes and why it chose what it is doing.
 
 ### Later
 
