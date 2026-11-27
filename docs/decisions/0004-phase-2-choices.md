@@ -37,3 +37,13 @@ These are places where a spec item left room, and what was chosen. Each is for t
 - **The eval report is one JSON file per scenario** under `.quality/evals/`.
 - **A scenario test may contain no number at all** outside quoted text. That is how "no thresholds of their own" is checked.
 - **Measured for scenario 1:** both needs below 0.8 on every tick, 3.97 goal switches per minute against a limit of 6, and thirty simulated minutes in under a second.
+
+## Viewer
+
+- **What to draw is decided in `src/view/`, which is tested. `src/web/` only paints it.** The page has no tests of its own, so it is kept to drawing and the frame loop.
+- **Whatever has acted is drawn as a circle, and everything else as a box.** The view learns who acts from the trace, so no kind is named.
+- **The scene is framed once, from where things start**, with two units of room and the origin always in view. It does not follow the duck.
+- **The thought shown is what the planner said, else what it guessed, else the skill it chose** and what it chose it for.
+- **The page runs at most five ticks per frame.** A page left in the background picks up where it was instead of racing to catch up.
+- **The page keeps time from the frame callback's own timestamp**, so no clock is read anywhere in `src/`.
+- **Checked by hand:** the built page was opened in a headless browser at phone size. The duck ate, walked to the nest and rested, with no console errors.
