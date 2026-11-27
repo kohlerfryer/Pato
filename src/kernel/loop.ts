@@ -127,55 +127,91 @@ function act(
   return agent.executor.tick(ended, emit);
 }
 
-export function createKernel(setup: {
+interface KernelSetup {
   readonly seed: number;
   readonly scenario: string;
   readonly world: WorldState;
   readonly rules: ActionRules;
   readonly agents: readonly AgentSetup[];
-}): Kernel {
-  const clock = createClock();
-  const streams = createStreams(setup.seed);
-  const trace = createTrace(setup.seed, setup.scenario);
-  const agents = [...setup.agents].sort((a, b) => (a.id < b.id ? -1 : 1)).map(createAgent);
-  let world = setup.world;
-  let requests = new Map<EntityId, Action>();
+  /** The predicates the vocabulary lists. One that is missing is believed all the same, and reported once. */
+  readonly known?: ReadonlySet<string>;
+}
 
-  const tick = (): void => {
-    const t = clock.tick();
-    const events: TraceEvent[] = [];
-    const emitFor =
-      ({ id }: Agent): Log =>
-      (type, data) =>
-        events.push({ t, agent: id, type, data });
+/** Everything one run holds between ticks. */
+interface Run {
+  readonly setup: KernelSetup;
+  readonly clock: ReturnType<typeof createClock>;
+  readonly streams: ReturnType<typeof createStreams>;
+  readonly trace: Trace;
+  readonly agents: readonly Agent[];
+  /** Predicates outside the vocabulary that have already been reported. */
+  readonly reported: Set<string>;
+  world: WorldState;
+  /** The action each agent has under way, for the world to carry on with next tick. */
+  requests: Map<EntityId, Action>;
+}
 
-    const stepped = step(world, requests, setup.rules);
-    world = stepped.state;
-    const sensed = agents.map(({ id: self, setup: { sensors } }) => {
-      const random = streams.stream(`sense:${self}`);
-      return sensors.flatMap((sensor) => sensor({ t, world, self, random }));
-    });
-    agents.forEach((agent, i) => {
-      takeIn(agent, sensed[i] ?? [], t, emitFor(agent));
-    });
-    for (const agent of agents) aim(agent, t, emitFor(agent));
-    const choices = agents.map((agent) => plan(agent, emitFor(agent)));
-    requests = new Map();
-    agents.forEach((agent, i) => {
-      const ended = stepped.outcomes.get(agent.id);
-      const action = act(agent, choices[i] ?? null, ended, emitFor(agent));
-      if (action) requests.set(agent.id, action);
-    });
-    for (const agent of agents) for (const learn of agent.setup.learners) learn(events);
-    for (const event of events) trace.append(event);
+/** Asks every agent's sensors what they can tell, reporting any predicate the vocabulary lacks. */
+function sense(run: Run, t: number, events: TraceEvent[]): Fact[][] {
+  const { known } = run.setup;
+  const sensed = run.agents.map(({ id: self, setup: { sensors } }) => {
+    const random = run.streams.stream(`sense:${self}`);
+    return sensors.flatMap((sensor) => sensor({ t, world: run.world, self, random }));
+  });
+  for (const { predicate } of sensed.flat()) {
+    if (!known || known.has(predicate) || run.reported.has(predicate)) continue;
+    run.reported.add(predicate);
+    events.push({ t, agent: null, type: "world", data: { unknown_predicate: predicate } });
+  }
+  return sensed;
+}
+
+function runTick(run: Run): void {
+  const { agents } = run;
+  const t = run.clock.tick();
+  const events: TraceEvent[] = [];
+  const emitFor =
+    ({ id }: Agent): Log =>
+    (type, data) =>
+      events.push({ t, agent: id, type, data });
+
+  const stepped = step(run.world, run.requests, run.setup.rules);
+  run.world = stepped.state;
+  const sensed = sense(run, t, events);
+  agents.forEach((agent, i) => {
+    takeIn(agent, sensed[i] ?? [], t, emitFor(agent));
+  });
+  for (const agent of agents) aim(agent, t, emitFor(agent));
+  const choices = agents.map((agent) => plan(agent, emitFor(agent)));
+  run.requests = new Map();
+  agents.forEach((agent, i) => {
+    const ended = stepped.outcomes.get(agent.id);
+    const action = act(agent, choices[i] ?? null, ended, emitFor(agent));
+    if (action) run.requests.set(agent.id, action);
+  });
+  for (const agent of agents) for (const learn of agent.setup.learners) learn(events);
+  for (const event of events) run.trace.append(event);
+}
+
+export function createKernel(setup: KernelSetup): Kernel {
+  const run: Run = {
+    setup,
+    clock: createClock(),
+    streams: createStreams(setup.seed),
+    trace: createTrace(setup.seed, setup.scenario),
+    agents: [...setup.agents].sort((a, b) => (a.id < b.id ? -1 : 1)).map(createAgent),
+    reported: new Set(),
+    world: setup.world,
+    requests: new Map(),
   };
-
   return {
-    trace,
-    agents,
+    trace: run.trace,
+    agents: run.agents,
     get world() {
-      return world;
+      return run.world;
     },
-    tick,
+    tick() {
+      runTick(run);
+    },
   };
 }
