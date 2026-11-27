@@ -51,9 +51,11 @@ The previous attempt, `puddles`, was a reaction machine: a kid held something up
 - **R-19** (phase 4): The duck has no spoken voice. What it thinks or wants to tell a kid appears as a thought bubble, and every bubble passes a child-appropriate check.
 - **R-20** (phase 2): The headless simulation is fast enough that the whole stub eval suite runs in about a minute.
 - **R-21** (phase 7): Real senses (camera, speech, laughter) run on the machine and feed the same facts as the simulated ones. No image or audio is kept.
-- **R-22** (phase 7): The world is drawn on screen from world state. Drawing never changes the simulation.
+- **R-22** (phase 2): The world can be watched in a browser, on a phone as well as a laptop, drawn in plain shapes from world state. Drawing never changes the simulation.
 - **R-23** (phase 6): Each kind of learning is a separate module that can be replaced or switched off without changing the others.
 - **R-24** (phase 2): Each requirement about the duck's behaviour is proven by a scenario that runs headless in CI, against thresholds only the owner changes.
+- **R-29** (phase 2): Every merge to `main` publishes the latest build to a web address, so testing it needs no install and no app store.
+- **R-30** (phase 7): The duck is drawn as a character with expressions, in place of the viewer's plain shapes.
 
 ### Later
 
@@ -66,6 +68,7 @@ The previous attempt, `puddles`, was a reaction machine: a kid held something up
 
 - **Hardware:** one MacBook Pro with about 22 GB of memory. Target 15 to 18 GB in use with the models loaded.
 - **Local only:** play needs no network. Camera and microphone are processed on the machine.
+- **Reach:** it runs in a browser. With the stub planner the whole game runs on a phone. The language-model planner needs a model server, which for now is the Mac.
 - **Stack:** TypeScript for the game and its tools. No Python until real senses arrive in phase 7.
 - **Kids first:** the duck rewards smiles and laughs, never time on screen.
 

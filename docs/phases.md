@@ -2,16 +2,16 @@
 
 The builder works freely inside a phase and stops at its gate. Only the owner passes a gate, by raising `current` in `docs/phase.json`. `pnpm trace` refuses that change while any spec item or scenario of the phase being left has no test.
 
-| Phase         | Delivers                                                            | Proven by                                                    | Needs the Mac      |
-| ------------- | ------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------ |
-| 0 Contracts   | PRD, spec, evals, gates                                             | The owner's approval of this repository's first pull request | No                 |
-| 1 Foundations | Headless loop, facts and belief, trace, planner interface, registry | Phase 1 spec items                                           | No                 |
-| 2 Alive       | Drives, instincts, stub planner, content loading, scenario runner   | Scenario 1                                                   | No                 |
-| 3 Curious     | Sight, notes, curiosity, all five actions, rain                     | Scenarios 2 and 3                                            | No                 |
-| 4 Playful     | Simulated kid, laugh credit, requests, speech check                 | Scenarios 4 to 6                                             | No                 |
-| 5 Inventive   | New skills from tried sequences, the language-model planner         | Scenario 7                                                   | Yes, for live runs |
-| 6 Open        | Personalities, one-file objects, noise, a changing rule             | Scenarios 8 to 11                                            | For live runs      |
-| 7 Real kids   | Camera, speech, laughter, drawing                                   | Sessions with real kids                                      | Yes                |
+| Phase         | Delivers                                                                                               | Proven by                                                    | Needs the Mac      |
+| ------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ | ------------------ |
+| 0 Contracts   | PRD, spec, evals, gates                                                                                | The owner's approval of this repository's first pull request | No                 |
+| 1 Foundations | Headless loop, facts and belief, trace, planner interface, registry                                    | Phase 1 spec items                                           | No                 |
+| 2 Alive       | Drives, instincts, stub planner, content loading, scenario runner, a plain viewer published to the web | Scenario 1                                                   | No                 |
+| 3 Curious     | Sight, notes, curiosity, all five actions, rain                                                        | Scenarios 2 and 3                                            | No                 |
+| 4 Playful     | Simulated kid, laugh credit, requests, speech check                                                    | Scenarios 4 to 6                                             | No                 |
+| 5 Inventive   | New skills from tried sequences, the language-model planner                                            | Scenario 7                                                   | Yes, for live runs |
+| 6 Open        | Personalities, one-file objects, noise, a changing rule                                                | Scenarios 8 to 11                                            | For live runs      |
+| 7 Real kids   | Camera, speech, laughter, character drawing                                                            | Sessions with real kids                                      | Yes                |
 
 ## At every gate
 
@@ -28,7 +28,7 @@ Then the owner raises `current` in `docs/phase.json`.
 
 - **Phase 0:** read the fixed contracts in `spec.md` and the open decisions at its end. Approve, or say what to change.
 - **Phase 1:** read one trace file end to end. Is it enough to tell what happened?
-- **Phase 2:** watch two minutes of the duck alone. Does it look alive or mechanical?
+- **Phase 2:** open the published page on your phone and watch two minutes of the duck alone. Does it look alive or mechanical?
 - **Phase 3:** run a held-out object. Does what it learned on the house carry over?
 - **Phase 4:** run a held-out kid persona.
 - **Phase 5:** read the skill the duck registered for the roof. Would it work on a different building?

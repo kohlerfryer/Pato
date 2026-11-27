@@ -22,6 +22,8 @@ src/
   learners/   notes, laugh credit, funniness, new skills
   content/    loaders and validators for objects, creatures, personas, scenarios
   sim/        the simulated kid
+  view/       the view model: what to draw, as plain data
+  web/        the page: canvas drawing and the entry file (not unit-tested)
   evals/      the scenario runner, trace helpers, one test file per scenario
 content/
   vocabulary.json
@@ -304,10 +306,21 @@ The model server runs on the Mac itself and is reached over HTTP. In CI its repl
 - **S-EVAL-3** (R-24, phase 2): Each eval run writes a JSON report with pass or fail and every measured value per scenario.
 - **S-PERF-1** (R-20, phase 2): Thirty simulated minutes of the scenario 1 world run headless with the stub planner in under 20 seconds.
 
-## Real senses and drawing
+## Viewer
+
+A plain viewer makes every phase watchable from phase 2 on, in any browser, including a phone's. It draws shapes and labels only. Each merge to `main` publishes it as a static site.
+
+- **S-DRAW-1** (R-22, phase 2): A run with the viewer attached produces the same trace as a run without it.
+- **S-DRAW-2** (R-22, phase 2): A pure function turns world state and the latest trace events into a view model: each entity's shape, position, level and label, and each agent's goal and thought.
+- **S-DRAW-3** (R-22, phase 2): The view model scales the world to fit any viewport, portrait or landscape, keeping its proportions.
+- **S-DRAW-4** (R-29, phase 2): The page takes its scenario and seed from its address, and with none given runs the first scenario in `content/scenarios/` with seed 1.
+- **S-DRAW-5** (R-29, phase 2): Nothing the page loads imports a Node built-in, so the build runs from static files alone.
+- **S-DRAW-6** (R-22, phase 2): Only code under `src/web/` touches the page or its canvas, and no other code imports from `src/web/`.
+
+## Real senses and character drawing
 
 - **S-REAL-1** (R-21, phase 7): Camera, speech and laughter sensors emit the same fact types as the simulated kid, and no image or audio is written to belief, memory, trace or disk.
-- **S-DRAW-1** (R-22, phase 7): The renderer reads world state and trace events and changes neither.
+- **S-DRAW-7** (R-30, phase 7): The character renderer draws from the same view model as the plain viewer.
 
 ## Open decisions
 
@@ -317,4 +330,4 @@ These are settled by the owner. Until then the default stands. Settled so far: t
 2. **Conflicting facts (S-FACT-2).** Default: the later fact wins. Revisit in phase 6 if noise makes the duck flicker.
 3. **Held-out scenarios.** Anything in this repository is visible to the building agent, so held-out variants live on the owner's machine or in a separate private repository.
 4. **Content format.** JSON, validated by hand-written checks, so no dependency is needed yet.
-5. **Drawing.** Deferred to phase 7. The likely route is porting the PixiJS puppet from `puddles`.
+5. **Character drawing.** Deferred to phase 7. The likely route is porting the PixiJS puppet from `puddles`. The plain viewer in phase 2 draws on a bare canvas.
