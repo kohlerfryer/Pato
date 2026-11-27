@@ -6,7 +6,7 @@
 import type { Action, Outcome } from "../agent/action.ts";
 import { type Belief, createBelief, forPlanner } from "../agent/belief.ts";
 import { choiceProblem } from "../agent/choice.ts";
-import type { Condition } from "../agent/condition.ts";
+import { type Condition, holds } from "../agent/condition.ts";
 import { type Executor, createExecutor } from "../agent/executor.ts";
 import type { EntityId, Fact } from "../agent/fact.ts";
 import { type Registry, createRegistry } from "../agent/registry.ts";
@@ -90,10 +90,13 @@ function takeIn(agent: Agent, facts: readonly Fact[], t: number, emit: Log): voi
   agent.belief.expire(t);
 }
 
-/** Asks the drives what the agent wants, logging the goal when it changes. */
+/** Asks the drives what the agent wants. A changed goal is logged, and interrupts the running skill. */
 function aim(agent: Agent, t: number, emit: Log): void {
   const goal = agent.setup.drives(agent.belief, t);
-  if (JSON.stringify(goal) !== JSON.stringify(agent.goal)) emit("goal", { goal });
+  if (JSON.stringify(goal) !== JSON.stringify(agent.goal)) {
+    emit("goal", { goal });
+    agent.executor.interrupt("new_goal");
+  }
   agent.goal = goal;
 }
 
@@ -124,7 +127,10 @@ function act(
 ): Action | null {
   const skill = choice ? agent.registry.get(choice.skill) : undefined;
   if (choice && skill) agent.executor.start(skill, choice.args, emit);
-  return agent.executor.tick(ended, emit);
+  const { belief, id: self } = agent;
+  return agent.executor.tick(ended, emit, (running, args) =>
+    running.effects.find((effect) => !holds(effect, belief, { ...args, self })),
+  );
 }
 
 interface KernelSetup {
