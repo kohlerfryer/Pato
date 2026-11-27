@@ -17,6 +17,7 @@
 /eslint.config.js      @kohlerfryer
 /tsconfig.json         @kohlerfryer
 /vitest.config.ts      @kohlerfryer
+/vite.config.ts        @kohlerfryer
 /knip.json             @kohlerfryer
 /.jscpd.json           @kohlerfryer
 /.prettierrc.json      @kohlerfryer

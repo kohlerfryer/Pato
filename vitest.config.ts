@@ -6,8 +6,8 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts", "tools/**/*.ts"],
-      // Command-line entry files only parse arguments and print; their logic is in tested modules.
-      exclude: ["**/*.test.ts", "tools/**/cli.ts"],
+      // Command-line entry files and the page's canvas code hold no logic; that lives in tested modules.
+      exclude: ["**/*.test.ts", "tools/**/cli.ts", "src/web/**"],
       reporter: ["text-summary"],
       thresholds: { lines: 85, branches: 85, functions: 85, statements: 85 },
     },

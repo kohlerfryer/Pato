@@ -19,7 +19,6 @@
 
 ## Still needed from the owner
 
-- Approval of a bundler as a new dependency (Vite), and of the small tool and settings changes that go with a page: the `src/web/` folder left out of coverage and of the tests-touched check, browser types switched on, and a publishing workflow.
 - GitHub Pages switched on for the repository, with GitHub Actions as its source.
 
 ## Rejected

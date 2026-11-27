@@ -1,0 +1,69 @@
+name: pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build site
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      enabled: ${{ steps.pages.outputs.enabled }}
+    steps:
+      # Publishing needs GitHub Pages switched on once by the owner (Settings, Pages, Source:
+      # GitHub Actions). Until then this job says so and publishes nothing.
+      - name: Is GitHub Pages switched on?
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/$GITHUB_REPOSITORY/pages" >/dev/null 2>&1; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::GitHub Pages is not switched on, so nothing was published."
+          fi
+      - uses: actions/checkout@v7
+        if: steps.pages.outputs.enabled == 'true'
+      - uses: pnpm/action-setup@v6
+        if: steps.pages.outputs.enabled == 'true'
+      - uses: actions/setup-node@v7
+        if: steps.pages.outputs.enabled == 'true'
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        if: steps.pages.outputs.enabled == 'true'
+      - run: pnpm build
+        if: steps.pages.outputs.enabled == 'true'
+      - uses: actions/configure-pages@v5
+        if: steps.pages.outputs.enabled == 'true'
+      - uses: actions/upload-pages-artifact@v4
+        if: steps.pages.outputs.enabled == 'true'
+        with:
+          path: dist
+
+  deploy:
+    name: publish
+    needs: build
+    if: needs.build.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
