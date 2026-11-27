@@ -9,15 +9,15 @@ import { type Frame, boundsOf, fit, viewModel } from "./model.ts";
 
 const duck: Entity = {
   id: "duck-1",
-  position: { x: 0, y: 0 },
+  position: { x: 0 },
   level: 1,
   props: { kind: "duck", speed: 2 },
 };
 const food: Entity = {
   id: "food-1",
-  position: { x: 10, y: 5 },
+  position: { x: 10 },
   level: 0,
-  props: { kind: "food", width: 2, depth: 1 },
+  props: { kind: "food", width: 2, height: 1 },
 };
 const world = createWorld([food, duck]);
 const frame: Frame = {
@@ -68,28 +68,40 @@ describe("fit", () => {
     expect(place(-10, 0).x).toBe(0);
   });
 
-  it("[S-DRAW-3] takes its bounds from where things are, with room around them", () => {
-    expect(boundsOf(world, 2)).toEqual({ minX: -2, minY: -2, maxX: 12, maxY: 7 });
+  it("[S-DRAW-3] takes its bounds from where things are and how high they reach, with room around", () => {
+    expect(boundsOf(world, 2)).toEqual({ minX: -2, minY: -2, maxX: 12, maxY: 4 });
     expect(boundsOf(createWorld([]), 2)).toEqual({ minX: -2, minY: -2, maxX: 2, maxY: 2 });
   });
 });
 
 describe("viewModel", () => {
-  it("[S-DRAW-2] gives each entity a shape, a position, a level and a label", () => {
-    const { shapes } = viewModel({ world, events: [event("goal", { goal: hungry })], frame });
+  it("[S-DRAW-2] sees the world from the side: each entity stands on its level, along the ground", () => {
+    const { shapes, ground } = viewModel({
+      world,
+      events: [event("goal", { goal: hungry })],
+      frame,
+    });
+    expect(ground).toBe(100);
     expect(shapes).toEqual([
-      { id: "food-1", shape: "box", x: 400, y: 0, width: 40, height: 20, level: 0, label: "food" },
+      { id: "food-1", shape: "box", x: 400, y: 90, width: 40, height: 20, level: 0, label: "food" },
       {
         id: "duck-1",
         shape: "circle",
         x: 200,
-        y: 100,
+        y: 70,
         width: 20,
         height: 20,
         level: 1,
         label: "duck",
       },
     ]);
+  });
+
+  it("[S-DRAW-2] rests each entity's underside on the top of the level beneath it", () => {
+    const { shapes, ground } = viewModel({ world, events: [], frame });
+    const [low, high] = shapes;
+    expect((low?.y ?? 0) + (low?.height ?? 0) / 2).toBe(ground);
+    expect((high?.y ?? 0) + (high?.height ?? 0) / 2).toBe(ground - 20);
   });
 
   it("[S-DRAW-2] draws as a circle whatever acts, and as a box whatever doesn't", () => {

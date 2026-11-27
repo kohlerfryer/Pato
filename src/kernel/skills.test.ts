@@ -8,7 +8,7 @@ import { type AgentSetup, type Kernel, type Sensor, createKernel } from "./loop.
 
 const up: Condition = { subject: "$self", predicate: "level", op: "above", value: 0 };
 const down: Condition = { subject: "$self", predicate: "level", op: "below", value: 0 };
-const duck: Entity = { id: "a", position: { x: 0, y: 0 }, level: 0, props: {} };
+const duck: Entity = { id: "a", position: { x: 0 }, level: 0, props: {} };
 
 const lift: ActionRule = (state, actor) => ({
   state: {

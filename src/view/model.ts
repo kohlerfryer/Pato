@@ -1,10 +1,11 @@
 /**
- * What to draw, as plain data. The page turns this into pixels and nothing else, so everything
- * worth testing about the picture is decided here.
+ * What to draw, as plain data: the world seen from the side, with the ground running across and
+ * levels rising above it. The page turns this into pixels and nothing else, so everything worth
+ * testing about the picture is decided here.
  */
 
 import type { TraceEvent } from "../kernel/trace.ts";
-import { type WorldState, amount } from "../world/state.ts";
+import { type Entity, type WorldState, amount } from "../world/state.ts";
 
 interface Bounds {
   readonly minX: number;
@@ -41,28 +42,35 @@ interface AgentView {
 }
 
 export interface ViewModel {
+  /** How far down the screen the ground is, in pixels. */
+  readonly ground: number;
   readonly shapes: readonly Shape[];
   readonly agents: readonly AgentView[];
 }
 
-/** How big to draw something that has no footprint of its own, in world units. */
+/** How wide and tall to draw something that has no size of its own, in world units. */
 const DEFAULT_SIZE = 1;
 
-/** The box around every entity's centre, with `margin` of room on each side. */
+const sizeOf = (entity: Entity): { width: number; height: number } => ({
+  width: amount(entity, "width") || DEFAULT_SIZE,
+  height: amount(entity, "height") || DEFAULT_SIZE,
+});
+
+/** The box around everything from the side: along the ground and up, with `margin` of room all round. */
 export function boundsOf(world: WorldState, margin: number): Bounds {
   const xs = world.entities.map((entity) => entity.position.x);
-  const ys = world.entities.map((entity) => entity.position.y);
+  const tops = world.entities.map((entity) => entity.level + sizeOf(entity).height);
   return {
     minX: Math.min(0, ...xs) - margin,
-    minY: Math.min(0, ...ys) - margin,
+    minY: -margin,
     maxX: Math.max(0, ...xs) + margin,
-    maxY: Math.max(0, ...ys) + margin,
+    maxY: Math.max(0, ...tops) + margin,
   };
 }
 
 /**
- * Places a world point on the screen: the whole frame fits, centred, at one scale for both axes,
- * with up at the top.
+ * Places a world point (how far along, how high) on the screen: the whole frame fits, centred, at
+ * one scale for both axes, with up at the top.
  */
 export function fit({
   bounds,
@@ -123,17 +131,18 @@ export function viewModel(input: {
   const acting = new Set(agents.map(({ id }) => id));
   const place = fit(input.frame);
   const shapes = input.world.entities.map((entity): Shape => {
-    const { x, y, scale } = place(entity.position.x, entity.position.y);
+    const { width, height } = sizeOf(entity);
+    const { x, y, scale } = place(entity.position.x, entity.level + height / 2);
     return {
       id: entity.id,
       shape: acting.has(entity.id) ? "circle" : "box",
       x,
       y,
-      width: (amount(entity, "width") || DEFAULT_SIZE) * scale,
-      height: (amount(entity, "depth") || DEFAULT_SIZE) * scale,
+      width: width * scale,
+      height: height * scale,
       level: entity.level,
       label: String(entity.props.kind ?? entity.id),
     };
   });
-  return { shapes, agents };
+  return { ground: place(0, 0).y, shapes, agents };
 }

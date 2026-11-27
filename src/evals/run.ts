@@ -22,8 +22,6 @@ interface Run {
   readonly ticks: number;
 }
 
-type Spot = readonly [number, number];
-
 const ticksIn = (seconds: number): number => Math.round(seconds * TICKS_PER_SECOND);
 
 /** Hands out ids by kind: the first food is `food-1`, the next `food-2`. */
@@ -47,24 +45,19 @@ function named<T extends { readonly id: string }>(
   return def;
 }
 
-const objectEntity = (def: ObjectDef, id: string, [x, y]: Spot): Entity => ({
+const objectEntity = (def: ObjectDef, id: string, x: number): Entity => ({
   id,
-  position: { x, y },
+  position: { x },
   level: 0,
-  props: { ...def.props, kind: def.id, width: def.footprint.width, depth: def.footprint.depth },
+  props: { ...def.props, kind: def.id, width: def.size.width, height: def.size.height },
 });
 
-function creatureEntity(
-  def: CreatureDef,
-  id: string,
-  [x, y]: Spot,
-  state: Entity["props"],
-): Entity {
+function creatureEntity(def: CreatureDef, id: string, x: number, state: Entity["props"]): Entity {
   const rates = Object.entries(def.rates).map(([need, rate]) => [`${need}_rate`, rate] as const);
   const { speed, reach, sight } = def;
   return {
     id,
-    position: { x, y },
+    position: { x },
     level: 0,
     props: { kind: def.id, speed, reach, sight, ...state, ...Object.fromEntries(rates) },
   };
@@ -84,7 +77,7 @@ const agentSetup = (id: string, def: CreatureDef, sensors: readonly Sensor[]): A
 export function createRun(scenario: Scenario, content: Content, seed: number): Run {
   const { objects, creatures, words } = content;
   const name = numberer();
-  const placed = (kind: string, at: Spot): Entity =>
+  const placed = (kind: string, at: number): Entity =>
     objectEntity(named(objects, kind, scenario), name(kind), at);
   const things = scenario.setup.objects.map(({ kind, at }) => placed(kind, at));
   const sensors = [

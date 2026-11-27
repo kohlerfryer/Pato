@@ -6,7 +6,7 @@ import { step } from "./step.ts";
 
 const creature = (props: Entity["props"]): Entity => ({
   id: "a",
-  position: { x: 0, y: 0 },
+  position: { x: 0 },
   level: 0,
   props,
 });

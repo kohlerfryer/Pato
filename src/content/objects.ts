@@ -9,7 +9,8 @@ export interface ObjectDef {
   readonly looks: readonly string[];
   /** What it is like. Behaviour comes from these, through each property's rule. */
   readonly props: Readonly<Record<string, boolean | number | string>>;
-  readonly footprint: { readonly width: number; readonly depth: number };
+  /** Its width along the ground and its height, seen from the side. */
+  readonly size: { readonly width: number; readonly height: number };
   /** What using it does, beyond what its properties already do. */
   readonly use?: unknown;
 }
@@ -26,12 +27,12 @@ function propsProblem(props: unknown, looks: unknown): string | null {
 
 function objectProblem(value: unknown, stem: string): string | null {
   if (!isRecord(value)) return "must be an object";
-  const fields = fieldsProblem(value, ["id", "looks", "props", "footprint"], ["use"]);
+  const fields = fieldsProblem(value, ["id", "looks", "props", "size"], ["use"]);
   if (fields !== null) return fields;
   if (value.id !== stem) return `id must be "${stem}", the file's name`;
-  const { footprint } = value;
-  if (!isRecord(footprint) || !isPositive(footprint.width) || !isPositive(footprint.depth))
-    return "footprint needs a width and a depth above zero";
+  const { size } = value;
+  if (!isRecord(size) || !isPositive(size.width) || !isPositive(size.height))
+    return "size needs a width and a height above zero";
   return propsProblem(value.props, value.looks);
 }
 

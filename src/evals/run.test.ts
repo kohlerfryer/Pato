@@ -14,13 +14,13 @@ const pond: Scenario = {
   respawn_s: 2,
   setup: {
     objects: [
-      { kind: "food", at: [4, 0] },
-      { kind: "nest", at: [0, 5] },
-      { kind: "food", at: [-4, 0] },
+      { kind: "food", at: 4 },
+      { kind: "nest", at: 0 },
+      { kind: "food", at: -4 },
     ],
-    agents: [{ creature: "duck", at: [1, 1], state: { hunger: 0.5 } }],
+    agents: [{ creature: "duck", at: 1, state: { hunger: 0.5 } }],
   },
-  triggers: [{ at_s: 2, spawn: { kind: "food", at: [0, -3] } }],
+  triggers: [{ at_s: 2, spawn: { kind: "food", at: 0 } }],
 };
 const ids = (scenario: Scenario, ticks = 0): string[] => {
   const { kernel } = createRun(scenario, content, 1);
@@ -34,25 +34,25 @@ describe("createRun", () => {
     expect(kernel.world.entities).toEqual([
       {
         id: "food-1",
-        position: { x: 4, y: 0 },
+        position: { x: 4 },
         level: 0,
-        props: { kind: "food", edible: 0.6, width: 0.5, depth: 0.5 },
+        props: { kind: "food", edible: 0.6, width: 0.5, height: 0.5 },
       },
       {
         id: "nest-1",
-        position: { x: 0, y: 5 },
+        position: { x: 0 },
         level: 0,
-        props: { kind: "nest", soft: 0.1, width: 1.5, depth: 1.5 },
+        props: { kind: "nest", soft: 0.1, width: 1.5, height: 0.5 },
       },
       {
         id: "food-2",
-        position: { x: -4, y: 0 },
+        position: { x: -4 },
         level: 0,
-        props: { kind: "food", edible: 0.6, width: 0.5, depth: 0.5 },
+        props: { kind: "food", edible: 0.6, width: 0.5, height: 0.5 },
       },
       {
         id: "duck-1",
-        position: { x: 1, y: 1 },
+        position: { x: 1 },
         level: 0,
         props: {
           kind: "duck",
@@ -95,21 +95,15 @@ describe("createRun", () => {
   });
 
   it.each([
-    [
-      "an object",
-      { ...pond, setup: { ...pond.setup, objects: [{ kind: "ghost", at: [0, 0] as const }] } },
-    ],
+    ["an object", { ...pond, setup: { ...pond.setup, objects: [{ kind: "ghost", at: 0 }] } }],
     [
       "a creature",
       {
         ...pond,
-        setup: { ...pond.setup, agents: [{ creature: "ghost", at: [0, 0] as const, state: {} }] },
+        setup: { ...pond.setup, agents: [{ creature: "ghost", at: 0, state: {} }] },
       },
     ],
-    [
-      "a spawned object",
-      { ...pond, triggers: [{ at_s: 1, spawn: { kind: "ghost", at: [0, 0] as const } }] },
-    ],
+    ["a spawned object", { ...pond, triggers: [{ at_s: 1, spawn: { kind: "ghost", at: 0 } }] }],
   ])("[S-EVAL-1] refuses a scenario that names %s there is no file for", (_what, scenario) => {
     expect(() => createRun(scenario, content, 1)).toThrow("ghost");
   });

@@ -102,7 +102,7 @@ describe("registry rejects", () => {
 
   it("[S-REG-2] turns away a target that is a fixed spot", () => {
     expect(
-      createRegistry().register(withBody([{ kind: "move_to", target: { x: 1, y: 2 } }])),
+      createRegistry().register(withBody([{ kind: "move_to", target: { x: 1 } }])),
     ).not.toBeNull();
   });
 

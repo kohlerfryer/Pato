@@ -4,7 +4,8 @@ import type { EntityId } from "../agent/fact.ts";
 
 export interface Entity {
   readonly id: EntityId;
-  readonly position: { readonly x: number; readonly y: number };
+  /** How far along the ground it is. Height is its level. */
+  readonly position: { readonly x: number };
   /** Height: the ground is 0, a crate's top is 1, a roof is 2. */
   readonly level: number;
   /** What it is like. Behaviour belongs to properties, never to ids. */

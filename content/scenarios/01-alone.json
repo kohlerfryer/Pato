@@ -5,11 +5,11 @@
   "respawn_s": 30,
   "setup": {
     "objects": [
-      { "kind": "food", "at": [5, 2] },
-      { "kind": "food", "at": [-3, 4] },
-      { "kind": "nest", "at": [-4, -3] }
+      { "kind": "food", "at": 5 },
+      { "kind": "food", "at": -2 },
+      { "kind": "nest", "at": -5 }
     ],
-    "agents": [{ "creature": "duck", "at": [0, 0], "state": { "hunger": 0.3, "sleepiness": 0.3 } }]
+    "agents": [{ "creature": "duck", "at": 0, "state": { "hunger": 0.3, "sleepiness": 0.3 } }]
   },
   "triggers": []
 }

@@ -13,7 +13,6 @@ const DONE = { status: "done" } as const;
 /** Where a move is headed, and how far from its centre counts as there. */
 interface Aim {
   readonly x: number;
-  readonly y: number;
   readonly level: number;
   readonly radius: number;
 }
@@ -33,12 +32,10 @@ export const moveTo: ActionRule = (state, actorId, action) => {
   const aim = actor && action.kind === "move_to" ? aimAt(state, actor, action.target) : undefined;
   if (!actor || aim?.level !== actor.level) return { state, outcome: UNREACHABLE };
   const dx = aim.x - actor.position.x;
-  const dy = aim.y - actor.position.y;
-  const gap = Math.hypot(dx, dy) - amount(actor, "reach") - aim.radius;
+  const gap = Math.abs(dx) - amount(actor, "reach") - aim.radius;
   if (gap <= CLOSE_ENOUGH) return { state, outcome: DONE };
   const stride = Math.min(gap, amount(actor, "speed") / TICKS_PER_SECOND);
-  const scale = stride / Math.hypot(dx, dy);
-  const position = { x: actor.position.x + dx * scale, y: actor.position.y + dy * scale };
+  const position = { x: actor.position.x + Math.sign(dx) * stride };
   const next = withEntity(state, { ...actor, position });
   return gap - stride <= CLOSE_ENOUGH ? { state: next, outcome: DONE } : { state: next };
 };

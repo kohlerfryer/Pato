@@ -6,7 +6,7 @@ import { type ActionRule, step } from "./step.ts";
 
 const thing = (id: string, x = 0): Entity => ({
   id,
-  position: { x, y: 0 },
+  position: { x },
   level: 0,
   props: { grabbable: true },
 });
@@ -29,7 +29,7 @@ describe("world state", () => {
   it("[S-WORLD-1] is a list of entities with an id, a position, a level and properties", () => {
     const world = createWorld([thing("a", 3)]);
     expect(world.entities).toEqual([
-      { id: "a", position: { x: 3, y: 0 }, level: 0, props: { grabbable: true } },
+      { id: "a", position: { x: 3 }, level: 0, props: { grabbable: true } },
     ]);
   });
 

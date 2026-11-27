@@ -8,13 +8,13 @@ import { type Entity, type WorldState, createWorld, withEntity } from "./state.t
 
 const walker = (x = 0, props: Entity["props"] = {}): Entity => ({
   id: "a",
-  position: { x, y: 0 },
+  position: { x },
   level: 0,
   props: { speed: 3, reach: 1, ...props },
 });
 const thing = (x: number, over: Partial<Entity> = {}): Entity => ({
   id: "b",
-  position: { x, y: 0 },
+  position: { x },
   level: 0,
   props: {},
   ...over,
@@ -59,17 +59,16 @@ describe("move_to", () => {
   });
 
   it("[S-ACT-3] counts a wide target as within reach from its edge", () => {
-    const wide = thing(10, { props: { width: 4, depth: 2 } });
+    const wide = thing(10, { props: { width: 4, height: 2 } });
     const { world } = run(createWorld([walker(), wide]), to);
     expect(x(world)).toBeCloseTo(7, 6);
   });
 
-  it("[S-ACT-3] moves in both directions and on both axes", () => {
-    const spot: Action = { kind: "move_to", target: { x: -3, y: -4 } };
+  it("[S-ACT-3] moves in both directions along the ground", () => {
+    const spot: Action = { kind: "move_to", target: { x: -3 } };
     const { world, outcome } = run(createWorld([walker(0, { reach: 0.5 })]), spot);
-    const [a] = world.entities;
     expect(outcome).toEqual({ status: "done" });
-    expect(Math.hypot((a?.position.x ?? 0) + 3, (a?.position.y ?? 0) + 4)).toBeCloseTo(0.5, 6);
+    expect(x(world)).toBeCloseTo(-2.5, 6);
   });
 
   it("[S-ACT-3] fails with unreachable when the target is on another level", () => {

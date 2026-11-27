@@ -10,10 +10,10 @@ const pond = {
   seeds: [1, 2],
   respawn_s: 10,
   setup: {
-    objects: [{ kind: "food", at: [1, 2] }],
-    agents: [{ creature: "duck", at: [0, 0], state: { hunger: 0.5 } }],
+    objects: [{ kind: "food", at: 1 }],
+    agents: [{ creature: "duck", at: 0, state: { hunger: 0.5 } }],
   },
-  triggers: [{ at_s: 5, spawn: { kind: "nest", at: [3, 3] } }],
+  triggers: [{ at_s: 5, spawn: { kind: "nest", at: 3 } }],
 };
 const file = "content/scenarios/pond.json";
 const reading = (scenario: unknown) => (): unknown => readScenarios({ [file]: scenario });
@@ -35,22 +35,22 @@ describe("readScenarios", () => {
     ["a negative delay", { ...pond, respawn_s: -1 }],
     ["a setup that isn't an object", { ...pond, setup: [] }],
     ["a setup with no agents list", { ...pond, setup: { objects: [] } }],
-    ["an object with no kind", setup({ objects: [{ at: [1, 2] }] })],
-    ["an object placed nowhere", setup({ objects: [{ kind: "food", at: [1] }] })],
+    ["an object with no kind", setup({ objects: [{ at: 1 }] })],
+    ["an object placed nowhere", setup({ objects: [{ kind: "food", at: "left" }] })],
     [
       "an object with a field it doesn't know",
-      setup({ objects: [{ kind: "food", at: [1, 2], big: true }] }),
+      setup({ objects: [{ kind: "food", at: 1, big: true }] }),
     ],
-    ["an agent with no creature", setup({ agents: [{ at: [0, 0], state: {} }] })],
+    ["an agent with no creature", setup({ agents: [{ at: 0, state: {} }] })],
     [
       "an agent whose state isn't numbers",
-      setup({ agents: [{ creature: "duck", at: [0, 0], state: { hunger: "lots" } }] }),
+      setup({ agents: [{ creature: "duck", at: 0, state: { hunger: "lots" } }] }),
     ],
     ["triggers that aren't a list", { ...pond, triggers: {} }],
-    ["a trigger with no time", { ...pond, triggers: [{ spawn: { kind: "nest", at: [3, 3] } }] }],
+    ["a trigger with no time", { ...pond, triggers: [{ spawn: { kind: "nest", at: 3 } }] }],
     [
       "a trigger before the start",
-      { ...pond, triggers: [{ at_s: -1, spawn: { kind: "nest", at: [3, 3] } }] },
+      { ...pond, triggers: [{ at_s: -1, spawn: { kind: "nest", at: 3 } }] },
     ],
     ["a trigger that spawns nothing", { ...pond, triggers: [{ at_s: 5, spawn: {} }] }],
   ])("[S-EVAL-1] refuses %s, naming the file", (_what, scenario) => {

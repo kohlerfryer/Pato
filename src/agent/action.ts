@@ -2,10 +2,9 @@
 
 import type { EntityId } from "./fact.ts";
 
-/** A place in the world that is not an entity. */
+/** A place along the ground that is not an entity. */
 interface Spot {
   readonly x: number;
-  readonly y: number;
 }
 
 export type Action =

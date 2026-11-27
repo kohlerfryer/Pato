@@ -5,7 +5,8 @@ import { fieldsProblem, isPositive, isRecord, readFiles } from "./check.ts";
 /** Something of a kind, at a spot given as [x, y]. */
 interface Placement {
   readonly kind: string;
-  readonly at: readonly [number, number];
+  /** How far along the ground. */
+  readonly at: number;
 }
 
 export interface Scenario {
@@ -21,7 +22,7 @@ export interface Scenario {
     readonly objects: readonly Placement[];
     readonly agents: readonly {
       readonly creature: string;
-      readonly at: readonly [number, number];
+      readonly at: number;
       /** The levels its needs start at. */
       readonly state: Readonly<Record<string, number>>;
     }[];
@@ -32,8 +33,7 @@ export interface Scenario {
 
 const FIELDS = ["id", "horizon_s", "seeds", "respawn_s", "setup", "triggers"];
 
-const isSpot = (value: unknown): boolean =>
-  Array.isArray(value) && value.length === 2 && value.every((each) => typeof each === "number");
+const isSpot = (value: unknown): boolean => typeof value === "number";
 
 const isNumbers = (value: unknown): boolean =>
   isRecord(value) && Object.values(value).every((each) => typeof each === "number");

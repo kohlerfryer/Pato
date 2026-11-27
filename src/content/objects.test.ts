@@ -8,7 +8,7 @@ const crate = {
   id: "crate",
   looks: ["grabbable"],
   props: { grabbable: true, weight: 3 },
-  footprint: { width: 1, depth: 1 },
+  size: { width: 1, height: 1 },
 };
 const file = "content/objects/crate.json";
 const reading =
@@ -17,7 +17,7 @@ const reading =
     readObjects({ [path]: object });
 
 describe("readObjects", () => {
-  it("[S-OBJ-1] reads an object with an id, looks, props and a footprint", () => {
+  it("[S-OBJ-1] reads an object with an id, looks, props and a size", () => {
     expect(readObjects({ [file]: crate })).toEqual([crate]);
   });
 
@@ -27,7 +27,7 @@ describe("readObjects", () => {
   });
 
   it("[S-OBJ-1] stops the load on a bad file and names it", () => {
-    expect(reading({ ...crate, footprint: { width: 0, depth: 1 } })).toThrow(file);
+    expect(reading({ ...crate, size: { width: 0, height: 1 } })).toThrow(file);
   });
 
   it.each([
@@ -38,8 +38,8 @@ describe("readObjects", () => {
     ["props that aren't plain values", { ...crate, props: { grabbable: { very: true } } }],
     ["looks that aren't among its props", { ...crate, looks: ["soft"] }],
     ["looks that aren't a list", { ...crate, looks: "grabbable" }],
-    ["a footprint with no size", { ...crate, footprint: { width: 1 } }],
-    ["a footprint that isn't an object", { ...crate, footprint: 2 }],
+    ["a size with no height", { ...crate, size: { width: 1 } }],
+    ["a size that isn't an object", { ...crate, size: 2 }],
   ])("[S-OBJ-1] refuses %s", (_what, object) => {
     expect(reading(object)).toThrow(file);
   });

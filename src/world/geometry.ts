@@ -1,4 +1,4 @@
-/** Distances between things, with each thing's size taken as half the longer side of its footprint. */
+/** Distances along the ground, with each thing's size taken as half its width. */
 
 import { type Entity, amount } from "./state.ts";
 
@@ -6,12 +6,12 @@ import { type Entity, amount } from "./state.ts";
 export const CLOSE_ENOUGH = 1e-9;
 
 export function radius(entity: Entity): number {
-  return Math.max(amount(entity, "width"), amount(entity, "depth")) / 2;
+  return amount(entity, "width") / 2;
 }
 
 /** The distance between two entities' centres. */
 export function apart(a: Entity, b: Entity): number {
-  return Math.hypot(b.position.x - a.position.x, b.position.y - a.position.y);
+  return Math.abs(b.position.x - a.position.x);
 }
 
 /** Whether `object` is close enough for `actor` to use, measured from the object's edge. */
@@ -19,20 +19,10 @@ export function withinReach(actor: Entity, object: Entity): boolean {
   return apart(actor, object) - radius(object) - amount(actor, "reach") <= CLOSE_ENOUGH;
 }
 
-/** Whether the straight line from `from` to `to` passes through `blocker`'s footprint. */
+/** Whether `blocker` stands on the ground between `from` and `to`. */
 export function crosses(from: Entity, to: Entity, blocker: Entity): boolean {
-  const dx = to.position.x - from.position.x;
-  const dy = to.position.y - from.position.y;
-  const length = dx * dx + dy * dy;
-  const along =
-    length === 0
-      ? 0
-      : ((blocker.position.x - from.position.x) * dx +
-          (blocker.position.y - from.position.y) * dy) /
-        length;
-  const t = Math.min(1, Math.max(0, along));
-  const nearest = { x: from.position.x + dx * t, y: from.position.y + dy * t };
-  return (
-    Math.hypot(blocker.position.x - nearest.x, blocker.position.y - nearest.y) < radius(blocker)
-  );
+  const low = Math.min(from.position.x, to.position.x);
+  const high = Math.max(from.position.x, to.position.x);
+  const nearest = Math.min(high, Math.max(low, blocker.position.x));
+  return Math.abs(blocker.position.x - nearest) < radius(blocker);
 }

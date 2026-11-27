@@ -91,7 +91,7 @@ describe("a run", () => {
     const kernel = createKernel({
       seed: 1,
       scenario: "test",
-      world: createWorld([{ id: "a", position: { x: 0, y: 0 }, level: 0, props: {} }]),
+      world: createWorld([{ id: "a", position: { x: 0 }, level: 0, props: {} }]),
       rules: { jump: lift },
       agents: [agent("a")],
     });

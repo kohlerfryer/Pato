@@ -5,7 +5,7 @@ import { createBody } from "./body.ts";
 
 const me = (props: Entity["props"], level = 0): Entity => ({
   id: "a",
-  position: { x: 0, y: 0 },
+  position: { x: 0 },
   level,
   props,
 });

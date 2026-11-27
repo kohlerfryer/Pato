@@ -11,13 +11,13 @@ import { step } from "./step.ts";
 
 const duck = (props: Entity["props"]): Entity => ({
   id: "a",
-  position: { x: 0, y: 0 },
+  position: { x: 0 },
   level: 0,
   props: { reach: 1, ...props },
 });
 const item = (props: Entity["props"]): Entity => ({
   id: "b",
-  position: { x: 0.5, y: 0 },
+  position: { x: 0.5 },
   level: 0,
   props,
 });

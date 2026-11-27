@@ -18,6 +18,8 @@ const MS_PER_TICK = 1000 / TICKS_PER_SECOND;
 const LABEL_PX = 12;
 const INK = "#5b3d1f";
 const BOX = "#c9a66b";
+const SKY = "#cfe8f5";
+const GRASS = "#b9d98a";
 const CIRCLE = "#f2c14e";
 
 /** Makes the canvas as sharp as the screen allows. Returns how many canvas pixels make one screen pixel. */
@@ -33,7 +35,11 @@ function sharpen(canvas: HTMLCanvasElement): number {
 }
 
 function draw(context: CanvasRenderingContext2D, view: ViewModel, ratio: number): void {
-  context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+  const { width: across, height: down } = context.canvas;
+  context.fillStyle = SKY;
+  context.fillRect(0, 0, across, view.ground);
+  context.fillStyle = GRASS;
+  context.fillRect(0, view.ground, across, down - view.ground);
   context.font = `${String(LABEL_PX * ratio)}px system-ui, sans-serif`;
   context.textAlign = "center";
   for (const { shape, x, y, width, height, level, label } of view.shapes) {
