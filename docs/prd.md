@@ -1,6 +1,6 @@
 # Pato: product requirements
 
-Pato is a small 2D world with a duck that has its own drives, explores whatever appears, and learns over time what it can do and what makes the kids laugh. Nothing it does with a specific object is scripted. It runs on one MacBook Pro.
+Pato is a small 2D world, seen from the side like a picture book, with a duck that has its own drives, explores whatever appears, and learns over time what it can do and what makes the kids laugh. Nothing it does with a specific object is scripted. It runs on one MacBook Pro.
 
 This document says what must be true. [`spec.md`](spec.md) says how it is built and [`evals.md`](evals.md) how it is proven. Every numbered requirement below is answered by at least one spec item, and `pnpm trace` fails if one is not.
 
@@ -51,7 +51,7 @@ The previous attempt, `puddles`, was a reaction machine: a kid held something up
 - **R-19** (phase 4): The duck has no spoken voice. What it thinks or wants to tell a kid appears as a thought bubble, and every bubble passes a child-appropriate check.
 - **R-20** (phase 2): The headless simulation is fast enough that the whole stub eval suite runs in about a minute.
 - **R-21** (phase 7): Real senses (camera, speech, laughter) run on the machine and feed the same facts as the simulated ones. No image or audio is kept.
-- **R-22** (phase 2): The world can be watched in a browser, on a phone as well as a laptop, drawn in plain shapes from world state. Drawing never changes the simulation.
+- **R-22** (phase 2): The world can be watched in a browser, on a phone as well as a laptop, drawn from the side in plain shapes from world state. Drawing never changes the simulation.
 - **R-23** (phase 6): Each kind of learning is a separate module that can be replaced or switched off without changing the others.
 - **R-24** (phase 2): Each requirement about the duck's behaviour is proven by a scenario that runs headless in CI, against thresholds only the owner changes.
 - **R-29** (phase 2): Every merge to `main` publishes the latest build to a web address, so testing it needs no install and no app store.

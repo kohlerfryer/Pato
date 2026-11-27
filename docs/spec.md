@@ -140,13 +140,13 @@ type EventType = "fact" | "drive" | "goal" | "plan" | "skill" | "action" | "lear
 
 ## World
 
-Positions are 2D, plus a level: the ground is 0, a crate's top is 1, a roof is 2. Behaviour belongs to properties, so most new objects need no code.
+The world is seen from the side. A position is a distance along the ground, plus a level: the ground is 0, a crate's top is 1, a roof is 2. There is no depth: nothing is in front of or behind anything else. Behaviour belongs to properties, so most new objects need no code.
 
 - **S-WORLD-1** (R-12, phase 1): World state is a list of entities, each with an id, a position, a level and properties, and only the world step changes it.
 - **S-WORLD-2** (R-01, phase 2): Hunger and sleepiness rise each tick at the rates in the creature file and never exceed 1.
 - **S-WORLD-3** (R-01, phase 2): Using an `edible` object removes it and lowers the user's hunger by the object's amount, and food reappears after the scenario's delay.
 - **S-WORLD-4** (R-01, phase 2): Using a `soft` object rests on it: sleepiness falls each tick until the agent acts again or it reaches zero.
-- **S-WORLD-5** (R-02, phase 3): An agent can move into an object with `has_opening` and is `inside` it while within its footprint; an object without one stops movement at its edge.
+- **S-WORLD-5** (R-02, phase 3): An agent can move into an object with `has_opening` and is `inside` it while within its width; an object without one stops movement at its edge.
 - **S-WORLD-6** (R-03, phase 3): An agent is `under_cover` while inside an object with `roof`, or while holding one.
 - **S-WORLD-7** (R-03, phase 3): While it rains, an agent that is not `under_cover` becomes `wet`, and it stays wet until it has been under cover for 5 seconds.
 - **S-WORLD-8** (R-09, phase 3): An object's `use` effect is built only from these primitives: set a fact, toggle a state, add or remove a property, change a drive.
@@ -263,12 +263,12 @@ interface Note {
   "id": "umbrella",
   "looks": ["grabbable"],
   "props": { "grabbable": true },
-  "footprint": { "width": 1, "depth": 1 },
+  "size": { "width": 1, "height": 1 },
   "use": { "toggle": "open", "while_on": { "add": ["roof"] } }
 }
 ```
 
-- **S-OBJ-1** (R-09, phase 2): An object is one JSON file with `id`, `looks`, `props`, `footprint` and an optional `use`; a file that fails validation stops the load and names the file.
+- **S-OBJ-1** (R-09, phase 2): An object is one JSON file with `id`, `looks`, `props`, `size` (its width along the ground and its height) and an optional `use`; a file that fails validation stops the load and names the file.
 - **S-OBJ-2** (R-09, phase 2): Every file in `content/objects/` is loaded, and nothing else registers an object.
 - **S-OBJ-3** (R-08, phase 2): A creature is one JSON file with `id`, `speed`, `reach`, `sight`, drive `weights`, `rates` and `instincts`.
 - **S-OBJ-4** (R-09, phase 6): On load, each object is placed in an empty world and every action is applied to it; a crash, or a changed fact its file does not declare, fails the load.
@@ -311,7 +311,7 @@ The model server runs on the Mac itself and is reached over HTTP. In CI its repl
 A plain viewer makes every phase watchable from phase 2 on, in any browser, including a phone's. It draws shapes and labels only. Each merge to `main` publishes it as a static site.
 
 - **S-DRAW-1** (R-22, phase 2): A run with the viewer attached produces the same trace as a run without it.
-- **S-DRAW-2** (R-22, phase 2): A pure function turns world state and the latest trace events into a view model: each entity's shape, position, level and label, and each agent's goal and thought.
+- **S-DRAW-2** (R-22, phase 2): A pure function turns world state and the latest trace events into a view model seen from the side: where the ground is, each entity's shape, its place along the ground, its level as height and its label, and each agent's goal and thought.
 - **S-DRAW-3** (R-22, phase 2): The view model scales the world to fit any viewport, portrait or landscape, keeping its proportions.
 - **S-DRAW-4** (R-29, phase 2): The page takes its scenario and seed from its address, and with none given runs the first scenario in `content/scenarios/` with seed 1.
 - **S-DRAW-5** (R-29, phase 2): Nothing the page loads imports a Node built-in, so the build runs from static files alone.
