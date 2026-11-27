@@ -2,6 +2,7 @@
 
 import type { Action, Outcome } from "../agent/action.ts";
 import type { EntityId } from "../agent/fact.ts";
+import { grow } from "./needs.ts";
 import { type WorldState, frozen } from "./state.ts";
 
 /**
@@ -22,7 +23,10 @@ interface Stepped {
   readonly outcomes: ReadonlyMap<EntityId, Outcome>;
 }
 
-/** Applies each actor's action, in actor id order so a run never depends on who asked first. */
+/**
+ * Applies each actor's action, in actor id order so a run never depends on who asked first, then
+ * lets every need grow by a tick.
+ */
 export function step(
   state: WorldState,
   requests: ReadonlyMap<EntityId, Action>,
@@ -42,5 +46,5 @@ export function step(
     next = result.state;
     if (result.outcome) outcomes.set(actor, result.outcome);
   }
-  return { state: frozen(next), outcomes };
+  return { state: frozen({ ...next, entities: next.entities.map(grow) }), outcomes };
 }
