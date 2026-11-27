@@ -4,7 +4,7 @@
  */
 
 import { type Action, type Outcome, isActionKind } from "./action.ts";
-import { nameIn } from "./condition.ts";
+import { type Condition, nameIn } from "./condition.ts";
 import type { EntityId } from "./fact.ts";
 import type { Skill } from "./skill.ts";
 
@@ -13,16 +13,21 @@ export type Emit = (type: "skill" | "action", data: Record<string, unknown>) => 
 
 type Args = Readonly<Record<string, EntityId>>;
 
+/** Says which of a skill's declared effects doesn't hold in belief, if any. */
+type Unmet = (skill: Skill, args: Args) => Condition | undefined;
+
 export interface Executor {
   /** Whether a skill is under way. */
   readonly busy: boolean;
   /** Takes on `skill`. Throws if one is already under way. */
   start(skill: Skill, args: Args, emit: Emit): void;
+  /** Asks the running skill to stop at its next action boundary. Does nothing when idle. */
+  interrupt(reason: string): void;
   /**
    * Moves on by at most one action step. `ended` is how the action in flight ended, if it has.
    * Returns the action the world should carry on with, or null when there is none.
    */
-  tick(ended: Outcome | undefined, emit: Emit): Action | null;
+  tick(ended: Outcome | undefined, emit: Emit, unmet: Unmet): Action | null;
 }
 
 interface Running {
@@ -32,7 +37,18 @@ interface Running {
   next: number;
   /** The action in flight. */
   action: Action | null;
+  /** Why it has been asked to stop, if it has. */
+  interrupted: string | null;
 }
+
+/** How a skill ended, as it goes in the trace. */
+type Ending =
+  | { readonly phase: "done" }
+  | {
+      readonly phase: "failed" | "interrupted";
+      readonly reason: string;
+      readonly effect?: Condition;
+    };
 
 /** `step` aimed at what the skill was given, or the reason it can't be. */
 function aimed(step: Action, args: Args): Action | string {
@@ -44,15 +60,13 @@ function aimed(step: Action, args: Args): Action | string {
   return entity === undefined ? "unbound_target" : { ...step, target: entity };
 }
 
-/** Starts the next step of the body. Returns the action started, or the reason the skill is over. */
-function begin(running: Running, emit: Emit): Action | { readonly over: string | null } {
-  const step = running.skill.body[running.next];
-  if (!step) return { over: null };
+/** Starts a step of the body. Returns the action started, or why no action could start. */
+function begin(running: Running, step: Action, emit: Emit): Action | string {
   running.next += 1;
   const action = aimed(step, running.args);
   if (typeof action === "string") {
     emit("action", { phase: "end", action: step, status: "failed", reason: action });
-    return { over: action };
+    return action;
   }
   emit("action", { phase: "start", action });
   running.action = action;
@@ -66,14 +80,22 @@ function settle(running: Running, ended: Outcome, emit: Emit): string | null {
   return ended.status === "done" ? null : ended.reason;
 }
 
+/** Decides what follows an action boundary: the next step, or the end of the skill. */
+function advance(running: Running, emit: Emit, unmet: Unmet): Action | Ending {
+  const step = running.skill.body[running.next];
+  if (!step) {
+    const effect = unmet(running.skill, running.args);
+    return effect ? { phase: "failed", reason: "effect_unmet", effect } : { phase: "done" };
+  }
+  if (running.interrupted !== null) return { phase: "interrupted", reason: running.interrupted };
+  const begun = begin(running, step, emit);
+  return typeof begun === "string" ? { phase: "failed", reason: begun } : begun;
+}
+
 export function createExecutor(): Executor {
   let running: Running | null = null;
-  const finish = ({ skill }: Running, reason: string | null, emit: Emit): null => {
-    const id = skill.id;
-    emit(
-      "skill",
-      reason === null ? { phase: "done", skill: id } : { phase: "failed", skill: id, reason },
-    );
+  const finish = ({ skill }: Running, ending: Ending, emit: Emit): null => {
+    emit("skill", { ...ending, skill: skill.id });
     running = null;
     return null;
   };
@@ -83,18 +105,21 @@ export function createExecutor(): Executor {
     },
     start(skill, args, emit) {
       if (running) throw new Error(`the executor is busy with ${running.skill.id}`);
-      running = { skill, args, next: 0, action: null };
+      running = { skill, args, next: 0, action: null, interrupted: null };
       emit("skill", { phase: "start", skill: skill.id, args });
     },
-    tick(ended, emit) {
+    interrupt(reason) {
+      if (running) running.interrupted = reason;
+    },
+    tick(ended, emit, unmet) {
       if (!running) return null;
       if (running.action) {
         if (!ended) return running.action;
         const failure = settle(running, ended, emit);
-        if (failure !== null) return finish(running, failure, emit);
+        if (failure !== null) return finish(running, { phase: "failed", reason: failure }, emit);
       }
-      const begun = begin(running, emit);
-      return "over" in begun ? finish(running, begun.over, emit) : begun;
+      const next = advance(running, emit, unmet);
+      return "phase" in next ? finish(running, next, emit) : next;
     },
   };
 }
