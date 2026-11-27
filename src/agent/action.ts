@@ -19,3 +19,16 @@ export type Action =
 export type Outcome =
   | { readonly status: "done" }
   | { readonly status: "failed" | "interrupted"; readonly reason: string };
+
+const KINDS: ReadonlySet<string> = new Set<Action["kind"]>([
+  "move_to",
+  "jump",
+  "grab",
+  "drop",
+  "use",
+]);
+
+/** Whether `kind` is one of the five actions. */
+export function isActionKind(kind: unknown): kind is Action["kind"] {
+  return typeof kind === "string" && KINDS.has(kind);
+}
