@@ -8,6 +8,7 @@ import { loadScenarios } from "../content/scenarios.ts";
 import { createRun } from "../evals/run.ts";
 import { TICKS_PER_SECOND } from "../kernel/clock.ts";
 import { fromAddress } from "../view/address.ts";
+import { lines } from "../view/agents.ts";
 import { type ViewModel, boundsOf, viewModel } from "../view/model.ts";
 
 /** Room to leave around the scene, in world units. */
@@ -40,7 +41,16 @@ function draw(context: CanvasRenderingContext2D, view: ViewModel, ratio: number)
   context.fillRect(0, 0, context.canvas.width, context.canvas.height);
   context.font = `${String(LABEL_PX * ratio)}px system-ui, sans-serif`;
   context.textAlign = "center";
-  for (const { shape, x, y, width, height, tall, level, label } of view.shapes) {
+  context.strokeStyle = INK;
+  context.lineWidth = ratio;
+  context.setLineDash([4 * ratio, 6 * ratio]);
+  for (const { x, y, width, height } of view.sights) {
+    context.beginPath();
+    context.ellipse(x, y, width / 2, height / 2, 0, 0, Math.PI * 2);
+    context.stroke();
+  }
+  context.setLineDash([]);
+  for (const { shape, x, y, width, height, tall, level, label, known } of view.shapes) {
     const left = x - width / 2;
     const near = y + height / 2;
     context.beginPath();
@@ -58,19 +68,12 @@ function draw(context: CanvasRenderingContext2D, view: ViewModel, ratio: number)
       context.rect(left, y - height / 2 - tall, width, height);
     }
     context.fill();
+    if (known) context.stroke();
     context.fillStyle = INK;
     const text = level > 0 ? `${label} (up ${String(level)})` : label;
     context.fillText(text, x, near + LABEL_PX * ratio * 1.2);
   }
 }
-
-const describe = (view: ViewModel): string =>
-  view.agents
-    .map(
-      ({ id, goal, thought }) =>
-        `${id} wants ${goal ?? "nothing"}${thought === null ? "" : ` · ${thought}`}`,
-    )
-    .join("\n");
 
 function start(canvas: HTMLCanvasElement, status: HTMLElement): void {
   const context = canvas.getContext("2d");
@@ -106,7 +109,7 @@ function start(canvas: HTMLCanvasElement, status: HTMLElement): void {
       ...(view ? { previous: view } : {}),
     });
     draw(context, view, ratio);
-    status.textContent = describe(view);
+    status.textContent = view.agents.flatMap(lines).join("\n");
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);

@@ -20,8 +20,8 @@ const food: Entity = {
   props: { kind: "food", width: 2, depth: 1 },
 };
 const world = createWorld([food, duck]);
-const box = { id: "food-1", shape: "box", level: 0, label: "food" };
-const circle = { id: "duck-1", shape: "circle", level: 1, label: "duck" };
+const box = { id: "food-1", shape: "box", level: 0, label: "food", known: false };
+const circle = { id: "duck-1", shape: "circle", level: 1, label: "duck", known: false };
 const frame: Frame = {
   bounds: { minX: -10, minY: -5, maxX: 10, maxY: 5 },
   viewport: { width: 400, height: 200 },
@@ -111,7 +111,7 @@ describe("viewModel", () => {
       event("goal", { goal: hungry }),
       event("plan", { skill: "eat", args: { food: "food-1" } }),
     ];
-    expect(viewModel({ world, events, frame }).agents).toEqual([
+    expect(viewModel({ world, events, frame }).agents).toMatchObject([
       { id: "duck-1", goal: "hunger below 0.2", thought: "eat food-1" },
     ]);
   });
@@ -131,7 +131,7 @@ describe("viewModel", () => {
     const first = viewModel({ world, events: [event("goal", { goal: hungry })], frame });
     const second = viewModel({
       world,
-      events: [event("fact", { subject: "duck-1" })],
+      events: [event("learn", {})],
       frame,
       previous: first,
     });
@@ -159,6 +159,47 @@ describe("viewModel", () => {
       { t: 1, agent: null, type: "world", data: {} } satisfies TraceEvent,
     ];
     expect(viewModel({ world, events, frame }).agents.map(({ id }) => id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("what an agent can see", () => {
+  const watcher: Entity = { ...duck, props: { ...duck.props, sight: 4 } };
+  const watched = createWorld([food, watcher]);
+  const acts = event("goal", { goal: hungry });
+  const sees = (data: TraceEvent["data"]): TraceEvent =>
+    event("fact", { source: "sight", ...data });
+  const known = (events: TraceEvent[]): string[] =>
+    viewModel({ world: watched, events, frame })
+      .shapes.filter((shape) => shape.known)
+      .map(({ id }) => id);
+
+  it("[S-INSPECT-2] marks how far each agent can see, as a ring on the ground around it", () => {
+    const { sights } = viewModel({ world: watched, events: [acts], frame });
+    expect(sights).toEqual([{ id: "duck-1", x: 200, y: 80, width: 160, height: 80 }]);
+  });
+
+  it("[S-INSPECT-2] marks no ring around a thing that does not act, or an agent that cannot see", () => {
+    expect(viewModel({ world: watched, events: [], frame }).sights).toEqual([]);
+    expect(viewModel({ world, events: [acts], frame }).sights).toEqual([]);
+  });
+
+  it("[S-INSPECT-2] marks the entities an agent believes something about", () => {
+    expect(known([acts])).toEqual([]);
+    expect(known([sees({ subject: "food-1", predicate: "edible", value: true })])).toEqual([
+      "food-1",
+    ]);
+    const near = sees({ subject: "duck-1", predicate: "near", object: "food-1", value: false });
+    expect(known([near])).toEqual(["food-1"]);
+  });
+
+  it("[S-INSPECT-2] does not mark an agent for what it believes about itself", () => {
+    expect(known([sees({ subject: "duck-1", predicate: "hunger", value: 0.4 })])).toEqual([]);
+  });
+
+  it("[S-INSPECT-2] stops marking an entity once everything about it is forgotten", () => {
+    const seen = sees({ subject: "food-1", predicate: "edible", value: true });
+    const gone = event("fact", { subject: "food-1", predicate: "edible", forgotten: true });
+    expect(known([seen, gone])).toEqual([]);
   });
 });
 
