@@ -18,6 +18,7 @@ const fetch: Skill = {
 };
 const args = { thing: "t-1" };
 const done: Outcome = { status: "done" };
+const met = (): undefined => undefined;
 
 type Logged = [string, Record<string, unknown>];
 
@@ -32,7 +33,7 @@ describe("executor", () => {
   it("[S-EXEC-1] does nothing while it has no skill", () => {
     const { emit, log } = logging();
     const executor = createExecutor();
-    expect(executor.tick(undefined, emit)).toBeNull();
+    expect(executor.tick(undefined, emit, met)).toBeNull();
     expect(executor.busy).toBe(false);
     expect(log).toEqual([]);
   });
@@ -52,11 +53,11 @@ describe("executor", () => {
     const executor = createExecutor();
     executor.start(fetch, args, emit);
     const asked: (Action | null)[] = [
-      executor.tick(undefined, emit),
-      executor.tick(undefined, emit),
-      executor.tick(done, emit),
-      executor.tick(done, emit),
-      executor.tick(done, emit),
+      executor.tick(undefined, emit, met),
+      executor.tick(undefined, emit, met),
+      executor.tick(done, emit, met),
+      executor.tick(done, emit, met),
+      executor.tick(done, emit, met),
     ];
     expect(asked).toEqual([
       { kind: "move_to", target: "t-1" },
@@ -72,9 +73,9 @@ describe("executor", () => {
     const { emit, log } = logging();
     const executor = createExecutor();
     executor.start(withBody([{ kind: "jump" }]), args, emit);
-    executor.tick(undefined, emit);
-    executor.tick(undefined, emit);
-    executor.tick(done, emit);
+    executor.tick(undefined, emit, met);
+    executor.tick(undefined, emit, met);
+    executor.tick(done, emit, met);
     expect(log).toEqual([
       ["skill", { phase: "start", skill: "fetch", args }],
       ["action", { phase: "start", action: { kind: "jump" } }],
@@ -87,8 +88,8 @@ describe("executor", () => {
     const { emit, log } = logging();
     const executor = createExecutor();
     executor.start(fetch, args, emit);
-    executor.tick(undefined, emit);
-    expect(executor.tick({ status: "failed", reason: "unreachable" }, emit)).toBeNull();
+    executor.tick(undefined, emit, met);
+    expect(executor.tick({ status: "failed", reason: "unreachable" }, emit, met)).toBeNull();
     expect(log.slice(2)).toEqual([
       [
         "action",
@@ -108,8 +109,8 @@ describe("executor", () => {
     const { emit, log } = logging();
     const executor = createExecutor();
     executor.start(fetch, args, emit);
-    executor.tick(undefined, emit);
-    executor.tick({ status: "interrupted", reason: "new_goal" }, emit);
+    executor.tick(undefined, emit, met);
+    executor.tick({ status: "interrupted", reason: "new_goal" }, emit, met);
     expect(log.at(-2)?.[1]).toMatchObject({ status: "interrupted", reason: "new_goal" });
   });
 
@@ -117,14 +118,14 @@ describe("executor", () => {
     const { emit } = logging();
     const executor = createExecutor();
     executor.start(withBody([{ kind }]), args, emit);
-    expect(executor.tick(undefined, emit)).toEqual({ kind });
+    expect(executor.tick(undefined, emit, met)).toEqual({ kind });
   });
 
   it("[S-ACT-1] rejects any other action without asking the world for it", () => {
     const { emit, log } = logging();
     const executor = createExecutor();
     executor.start(withBody([{ kind: "fly" }, { kind: "jump" }]), args, emit);
-    expect(executor.tick(undefined, emit)).toBeNull();
+    expect(executor.tick(undefined, emit, met)).toBeNull();
     expect(log.slice(1)).toEqual([
       [
         "action",
@@ -139,7 +140,7 @@ describe("executor", () => {
     const { emit, log } = logging();
     const executor = createExecutor();
     executor.start(fetch, {}, emit);
-    expect(executor.tick(undefined, emit)).toBeNull();
+    expect(executor.tick(undefined, emit, met)).toBeNull();
     expect(log.at(-1)).toEqual([
       "skill",
       { phase: "failed", skill: "fetch", reason: "unbound_target" },
@@ -150,8 +151,121 @@ describe("executor", () => {
     const { emit } = logging();
     const executor = createExecutor();
     executor.start(withBody([]), args, emit);
-    expect(executor.tick(undefined, emit)).toBeNull();
+    expect(executor.tick(undefined, emit, met)).toBeNull();
     executor.start(fetch, args, emit);
     expect(executor.busy).toBe(true);
+  });
+});
+
+describe("interrupting", () => {
+  it("[S-EXEC-2] stops the running skill at its next action boundary, and logs it", () => {
+    const { emit, log } = logging();
+    const executor = createExecutor();
+    executor.start(fetch, args, emit);
+    executor.tick(undefined, emit, met);
+    executor.interrupt("new_goal");
+    expect(executor.tick(undefined, emit, met)).toEqual({ kind: "move_to", target: "t-1" });
+    expect(executor.busy).toBe(true);
+    expect(executor.tick(done, emit, met)).toBeNull();
+    expect(log.slice(2)).toEqual([
+      ["action", { phase: "end", action: { kind: "move_to", target: "t-1" }, status: "done" }],
+      ["skill", { phase: "interrupted", skill: "fetch", reason: "new_goal" }],
+    ]);
+    expect(executor.busy).toBe(false);
+  });
+
+  it("[S-EXEC-2] lets a skill finish when the interruption comes during its last action", () => {
+    const { emit, log } = logging();
+    const executor = createExecutor();
+    executor.start(withBody([{ kind: "jump" }]), args, emit);
+    executor.tick(undefined, emit, met);
+    executor.interrupt("new_goal");
+    executor.tick(done, emit, met);
+    expect(log.at(-1)).toEqual(["skill", { phase: "done", skill: "fetch" }]);
+  });
+
+  it("[S-EXEC-2] stops a skill that has not started its first action yet", () => {
+    const { emit, log } = logging();
+    const executor = createExecutor();
+    executor.start(fetch, args, emit);
+    executor.interrupt("new_goal");
+    expect(executor.tick(undefined, emit, met)).toBeNull();
+    expect(log).toHaveLength(2);
+  });
+
+  it("[S-EXEC-2] does nothing when no skill is running, and doesn't carry over to the next", () => {
+    const { emit } = logging();
+    const executor = createExecutor();
+    executor.interrupt("new_goal");
+    executor.start(fetch, args, emit);
+    expect(executor.tick(undefined, emit, met)).toEqual({ kind: "move_to", target: "t-1" });
+  });
+});
+
+describe("effects", () => {
+  const effect = {
+    subject: "$self",
+    predicate: "holding",
+    object: "$thing",
+    op: "is",
+    value: true,
+  } as const;
+  const grabbing: Skill = {
+    ...fetch,
+    effects: [effect],
+    body: [{ kind: "grab", target: "$thing" }],
+  };
+
+  it("[S-EXEC-3] ends a skill done only if its declared effects hold after its last action", () => {
+    const { emit, log } = logging();
+    const executor = createExecutor();
+    const asked: unknown[] = [];
+    executor.start(grabbing, args, emit);
+    executor.tick(undefined, emit, met);
+    executor.tick(done, emit, (skill, given) => {
+      asked.push([skill.id, given]);
+      return undefined;
+    });
+    expect(log.at(-1)).toEqual(["skill", { phase: "done", skill: "fetch" }]);
+    expect(asked).toEqual([["fetch", args]]);
+  });
+
+  it("[S-EXEC-3] otherwise ends it failed, naming the unmet effect", () => {
+    const { emit, log } = logging();
+    const executor = createExecutor();
+    executor.start(grabbing, args, emit);
+    executor.tick(undefined, emit, met);
+    executor.tick(done, emit, () => effect);
+    expect(log.at(-1)).toEqual([
+      "skill",
+      { phase: "failed", skill: "fetch", reason: "effect_unmet", effect },
+    ]);
+    expect(executor.busy).toBe(false);
+  });
+
+  it("[S-EXEC-3] doesn't check effects before the last action has ended", () => {
+    const { emit } = logging();
+    const executor = createExecutor();
+    let checks = 0;
+    const counting = (): undefined => {
+      checks += 1;
+      return undefined;
+    };
+    executor.start(fetch, args, emit);
+    executor.tick(undefined, emit, counting);
+    executor.tick(done, emit, counting);
+    executor.tick(done, emit, counting);
+    expect(checks).toBe(0);
+    executor.tick(done, emit, counting);
+    expect(checks).toBe(1);
+  });
+
+  it("[S-EXEC-3] doesn't check the effects of a skill whose action failed", () => {
+    const { emit, log } = logging();
+    const executor = createExecutor();
+    executor.start(grabbing, args, emit);
+    executor.tick(undefined, emit, met);
+    executor.tick({ status: "failed", reason: "too_far" }, emit, () => effect);
+    expect(log.at(-1)).toEqual(["skill", { phase: "failed", skill: "fetch", reason: "too_far" }]);
   });
 });
