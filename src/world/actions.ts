@@ -2,7 +2,7 @@
 
 import type { Action } from "../agent/action.ts";
 import { TICKS_PER_SECOND } from "../kernel/clock.ts";
-import { CLOSE_ENOUGH, radius, withinReach } from "./geometry.ts";
+import { CLOSE_ENOUGH, covers, radius, withinReach } from "./geometry.ts";
 import { carry, drop, grab } from "./hands.ts";
 import { jump, settle } from "./levels.ts";
 import { type PropertyRule, propertyRules } from "./property.ts";
@@ -11,6 +11,7 @@ import type { ActionRule } from "./step.ts";
 
 const UNREACHABLE = { status: "failed", reason: "unreachable" } as const;
 const DONE = { status: "done" } as const;
+const BLOCKED = { status: "failed", reason: "blocked" } as const;
 
 /** Where a move is headed, and how far from its centre counts as there. */
 interface Aim {
@@ -22,11 +23,28 @@ interface Aim {
 
 type Target = Extract<Action, { kind: "move_to" }>["target"];
 
+/** Where to head for. A thing with an opening is walked into, so its centre is the aim. */
 function aimAt(state: WorldState, actor: Entity, target: Target): Aim | undefined {
-  if (typeof target !== "string") return { ...target, level: actor.level, radius: 0 };
+  const reach = amount(actor, "reach");
+  if (typeof target !== "string") return { ...target, level: actor.level, radius: reach };
   const entity = find(state, target);
   if (!entity) return undefined;
-  return { ...entity.position, level: entity.level, radius: radius(entity) };
+  const into = entity.props.has_opening === true;
+  return { ...entity.position, level: entity.level, radius: into ? 0 : radius(entity) + reach };
+}
+
+/** Whether stepping to `moved` would walk into the side of something with no way in. */
+function blocked(state: WorldState, actor: Entity, moved: Entity): boolean {
+  return state.entities.some(
+    (object) =>
+      object.id !== actor.id &&
+      object.id !== actor.props.holding &&
+      object.props.has_opening !== true &&
+      object.level <= actor.level &&
+      actor.level < object.level + amount(object, "height") &&
+      covers(object, moved.position) &&
+      !covers(object, actor.position),
+  );
 }
 
 /** Walks the actor toward its target at its speed, and is done once the target is within reach. */
@@ -36,12 +54,13 @@ export const moveTo: ActionRule = (state, actorId, action) => {
   if (!actor || aim?.level !== actor.level) return { state, outcome: UNREACHABLE };
   const dx = aim.x - actor.position.x;
   const dy = aim.y - actor.position.y;
-  const gap = Math.hypot(dx, dy) - amount(actor, "reach") - aim.radius;
+  const gap = Math.hypot(dx, dy) - aim.radius;
   if (gap <= CLOSE_ENOUGH) return { state, outcome: DONE };
   const stride = Math.min(gap, amount(actor, "speed") / TICKS_PER_SECOND);
   const scale = stride / Math.hypot(dx, dy);
   const position = { x: actor.position.x + dx * scale, y: actor.position.y + dy * scale };
   const moved = { ...actor, position };
+  if (blocked(state, actor, moved)) return { state, outcome: BLOCKED };
   const next = settle(carry(withEntity(state, moved), moved), actorId);
   return gap - stride <= CLOSE_ENOUGH ? { state: next, outcome: DONE } : { state: next };
 };

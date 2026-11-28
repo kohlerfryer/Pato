@@ -3,6 +3,7 @@
 import type { Action, Outcome } from "../agent/action.ts";
 import type { EntityId } from "../agent/fact.ts";
 import { grow } from "./needs.ts";
+import { shelter } from "./shelter.ts";
 import { type Entity, type WorldState, frozen } from "./state.ts";
 
 /**
@@ -58,5 +59,6 @@ export function step(
     next = result.state;
     if (result.outcome) outcomes.set(actor, result.outcome);
   }
-  return { state: frozen({ ...next, entities: next.entities.map(grow) }), outcomes };
+  const covered = shelter(next);
+  return { state: frozen({ ...covered, entities: covered.entities.map(grow) }), outcomes };
 }

@@ -17,6 +17,7 @@ export interface WorldState {
   readonly away: readonly { readonly entity: Entity; readonly ticks: number }[];
   /** How many ticks a used-up thing stays away. Zero means it never comes back. */
   readonly respawn: number;
+  readonly raining: boolean;
 }
 
 const frozenEntity = (entity: Entity): Entity =>
@@ -35,11 +36,12 @@ export function frozen(state: WorldState): WorldState {
     entities: Object.freeze(state.entities.map(frozenEntity)),
     away: Object.freeze(away),
     respawn: state.respawn,
+    raining: state.raining,
   });
 }
 
 export function createWorld(entities: readonly Entity[], respawn = 0): WorldState {
-  return frozen({ entities, away: [], respawn });
+  return frozen({ entities, away: [], respawn, raining: false });
 }
 
 export function find(state: WorldState, id: EntityId): Entity | undefined {
