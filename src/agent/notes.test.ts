@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Condition } from "./condition.ts";
-import { NOTHING, type Tried, record, retrieve, triesOn } from "./notes.ts";
+import { NOTHING, type Tried, amend, record, retrieve, triesOn } from "./notes.ts";
 
 const fed: Condition = { subject: "$self", predicate: "hunger", op: "below", value: 0.01 };
 const near: Condition = {
@@ -115,5 +115,54 @@ describe("retrieval", () => {
 
   it("[S-MEM-4] keeps the order notes were made in among equals", () => {
     expect(retrieve(many.slice(0, 3), fed, [])).toEqual(many.slice(0, 3));
+  });
+});
+
+describe("amending a try with what followed", () => {
+  it("[S-MEM-3] counts a late effect as a hit for its note, without counting another try", () => {
+    const missed = record(record([], tried([fed]), rate), tried([]), rate);
+    const amended = amend(missed, tried([fed]), false, rate);
+    expect(amended.find(({ effect }) => effect === fed)).toMatchObject({ tries: 2, score: 1 });
+  });
+
+  it("[S-MEM-3] makes a note for a late effect never seen before", () => {
+    const amended = amend(record([], tried([]), rate), tried([near]), false, rate);
+    expect(amended.find(({ effect }) => effect === near)).toEqual({
+      action: "use",
+      property: "edible",
+      effect: near,
+      tries: 1,
+      score: 1,
+    });
+  });
+
+  it("[S-MEM-3] takes back the hit it gave nothing happening, when something did after all", () => {
+    const quiet = record([], tried([]), rate);
+    const amended = amend(quiet, tried([near]), true, rate);
+    expect(amended.find(({ effect }) => effect === NOTHING)).toMatchObject({
+      tries: 1,
+      score: 0.5,
+    });
+  });
+
+  it("[S-MEM-3] changes nothing when nothing more followed", () => {
+    const notes = record([], tried([fed]), rate);
+    expect(amend(notes, tried([]), false, rate)).toEqual(notes);
+  });
+});
+
+describe("retrieval for trying things", () => {
+  it("[S-MEM-4] shows one note for each action and property before showing a second", () => {
+    const busy = record([], tried([fed, near, { ...near, value: false }]), rate);
+    const others = ["grab", "jump", "move_to"].flatMap((action) =>
+      record([], tried([], action as Tried["action"]), rate),
+    );
+    const shown = retrieve([...busy, ...busy.slice(1), ...others], fed, []);
+    expect(
+      shown
+        .map(({ action }) => action)
+        .slice(0, 4)
+        .sort(),
+    ).toEqual(["grab", "jump", "move_to", "use"]);
   });
 });

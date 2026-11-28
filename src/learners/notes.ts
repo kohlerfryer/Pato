@@ -1,11 +1,12 @@
 /**
  * The note learner: watches its own agent's trace events, and after each action notes what changed
- * for the agent within the next second, once for each property of the thing acted on. It writes
- * nothing but its own notes.
+ * for the agent, once for each property of the thing acted on. It notes the try as soon as the
+ * action ends, so the planner knows it was tried, and adds what follows within the next second.
+ * It writes nothing but its own notes.
  */
 
 import type { Condition } from "../agent/condition.ts";
-import { type Tried, record } from "../agent/notes.ts";
+import { type Tried, amend, record } from "../agent/notes.ts";
 import { TICKS_PER_SECOND } from "../kernel/clock.ts";
 import type { TraceEvent } from "../kernel/trace.ts";
 import type { Note } from "../planner/planner.ts";
@@ -36,6 +37,13 @@ interface Watching {
   readonly before: ReadonlyMap<string, Held>;
 }
 
+/** An action that has ended: noted at once, and settled once its second is up. */
+interface Ended extends Watching {
+  readonly until: number;
+  /** The effects noted when it ended. */
+  readonly noted: readonly Condition[];
+}
+
 const keyOf = ({ subject, predicate, object }: Readonly<Record<string, unknown>>): string =>
   [subject, predicate, object ?? ""].map(String).join("\u0000");
 
@@ -61,15 +69,38 @@ function effectOf(before: Held | undefined, now: Held, target: string): Conditio
   return before?.value === now.value ? null : { ...base, op: "is", value: now.value };
 }
 
-/** Notes what changed over `span`, once for each property of what was acted on. */
-function close(notes: Note[], now: ReadonlyMap<string, Held>, span: Watching, rate: number): void {
-  const effects = [...now.entries()]
+/** What changed for the agent since `span` began, as effects in a fixed order. */
+function changes(now: ReadonlyMap<string, Held>, span: Watching): Condition[] {
+  return [...now.entries()]
     .map(([key, fact]) => effectOf(span.before.get(key), fact, span.target))
     .filter((effect) => effect !== null)
     .sort((a, b) => keyOf({ ...a }).localeCompare(keyOf({ ...b })));
+}
+
+/** Notes a try, once for each property of what was acted on. Returns what it noted. */
+function note(
+  notes: Note[],
+  now: ReadonlyMap<string, Held>,
+  span: Watching,
+  rate: number,
+): Condition[] {
+  const effects = changes(now, span);
+  for (const property of span.properties)
+    notes.splice(
+      0,
+      notes.length,
+      ...record(notes, { action: span.action, property, effects }, rate),
+    );
+  return effects;
+}
+
+/** Corrects the notes of a try with what changed after it was noted. */
+function settle(notes: Note[], now: ReadonlyMap<string, Held>, span: Ended, rate: number): void {
+  const noted = new Set(span.noted.map((effect) => JSON.stringify(effect)));
+  const effects = changes(now, span).filter((effect) => !noted.has(JSON.stringify(effect)));
   for (const property of span.properties) {
-    const tried: Tried = { action: span.action, property, effects };
-    notes.splice(0, notes.length, ...record(notes, tried, rate));
+    const late: Tried = { action: span.action, property, effects };
+    notes.splice(0, notes.length, ...amend(notes, late, span.noted.length === 0, rate));
   }
 }
 
@@ -81,7 +112,7 @@ interface NoteLearner {
 export function createNoteLearner(self: string, rate: number): NoteLearner {
   const notes: Note[] = [];
   const held = new Map<string, Held>();
-  const pending: (Watching & { readonly until: number })[] = [];
+  const pending: Ended[] = [];
   let watching: Watching | undefined;
   let aimedAt: string | undefined;
 
@@ -103,7 +134,7 @@ export function createNoteLearner(self: string, rate: number): NoteLearner {
   function act(data: Data, t: number): void {
     if (data.phase === "start") begin(data);
     else if (watching) {
-      pending.push({ ...watching, until: t + WINDOW });
+      pending.push({ ...watching, until: t + WINDOW, noted: note(notes, own(), watching, rate) });
       watching = undefined;
     }
   }
@@ -111,7 +142,7 @@ export function createNoteLearner(self: string, rate: number): NoteLearner {
   function take({ t, type, data }: TraceEvent): void {
     for (let next = pending[0]; next && t > next.until; next = pending[0]) {
       pending.shift();
-      close(notes, own(), next, rate);
+      settle(notes, own(), next, rate);
     }
     if (type === "fact" && data.forgotten === true) held.delete(keyOf(data));
     else if (type === "fact") held.set(keyOf(data), data as unknown as Held);

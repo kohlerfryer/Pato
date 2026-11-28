@@ -54,6 +54,39 @@ export function record(notes: readonly Note[], tried: Tried, rate: number): Note
   return [...updated, ...fresh];
 }
 
+/**
+ * `notes` corrected with `late`: effects that followed a try after it was recorded. Each is a hit
+ * for its note, which had been counted a miss, or a new note. If the try had been noted as nothing
+ * happening (`wasNothing`), that note's hit is taken back. No try is counted again.
+ */
+export function amend(
+  notes: readonly Note[],
+  late: Tried,
+  wasNothing: boolean,
+  rate: number,
+): Note[] {
+  if (late.effects.length === 0) return [...notes];
+  const pair = (note: Note): boolean =>
+    note.action === late.action && note.property === late.property;
+  const corrected = notes.map((note) => {
+    if (!pair(note)) return note;
+    if (wasNothing && same(note.effect, NOTHING))
+      return { ...note, score: Math.max(0, note.score - rate) };
+    const hit = late.effects.some((effect) => same(effect, note.effect));
+    return hit ? { ...note, score: Math.min(1, note.score + rate) } : note;
+  });
+  const fresh = late.effects
+    .filter((effect) => !notes.some((note) => pair(note) && same(note.effect, effect)))
+    .map((effect) => ({
+      action: late.action,
+      property: late.property,
+      effect,
+      tries: 1,
+      score: 1,
+    }));
+  return [...corrected, ...fresh];
+}
+
 /** How many times things with `property` have been tried: each action's count, added up. */
 export function triesOn(notes: readonly Note[], property: string): number {
   const byAction = new Map<string, number>();
@@ -65,7 +98,8 @@ export function triesOn(notes: readonly Note[], property: string): number {
 
 /**
  * The notes worth showing the planner: at most 8, those whose effect bears on the goal first, then
- * those about a property in view. Among equals, the order they were made in.
+ * those about a property in view. Among equals, one note for each action and property comes before
+ * a second, so the planner can see what has been tried; then the order they were made in.
  */
 export function retrieve(
   notes: readonly Note[],
@@ -74,9 +108,18 @@ export function retrieve(
 ): Note[] {
   const overlap = (note: Note): number =>
     (note.effect.predicate === goal.predicate ? 2 : 0) + (visible.includes(note.property) ? 1 : 0);
+  const pairs = new Set<string>();
+  const firstOfPair = (note: Note): boolean => {
+    const pair = `${note.action} ${note.property}`;
+    const first = !pairs.has(pair);
+    pairs.add(pair);
+    return first;
+  };
   return notes
     .map((note, order) => ({ note, order, rank: overlap(note) }))
     .sort((a, b) => b.rank - a.rank || a.order - b.order)
+    .map((ranked) => ({ ...ranked, first: firstOfPair(ranked.note) }))
+    .sort((a, b) => b.rank - a.rank || Number(b.first) - Number(a.first) || a.order - b.order)
     .slice(0, RETRIEVED)
     .map(({ note }) => note);
 }

@@ -150,6 +150,14 @@ describe("curiosity", () => {
     expect(curious([]).discomfort(seeing({ b: ["edible"] }, "memory"), "me")).toBe(0);
   });
 
+  it("[S-DRIVE-4] stops wanting once curiosity falls below where a need counts as met", () => {
+    const belief = seeing({ b: ["edible"] });
+    const choose = (n: number) =>
+      createArbiter([curious(tries("edible", n))], { curiosity: 1 }, "me");
+    expect(choose(24)(belief, 1)?.predicate).toBe("curiosity");
+    expect(choose(25)(belief, 1)).toBeNull();
+  });
+
   it("[S-DRIVE-4] reads the notes as they are now, not as they were when it was made", () => {
     const notes: Note[] = [];
     const drive = curiosityDrive(() => notes);
