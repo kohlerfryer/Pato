@@ -9,7 +9,8 @@ export interface ObjectDef {
   readonly looks: readonly string[];
   /** What it is like. Behaviour comes from these, through each property's rule. */
   readonly props: Readonly<Record<string, boolean | number | string>>;
-  readonly footprint: { readonly width: number; readonly depth: number };
+  /** Its size on the ground, and how many levels tall it stands. */
+  readonly footprint: { readonly width: number; readonly depth: number; readonly height?: number };
   /** What using it does, beyond what its properties already do. */
   readonly use?: unknown;
 }
@@ -32,8 +33,14 @@ function objectProblem(value: unknown, stem: string): string | null {
   const { footprint } = value;
   if (!isRecord(footprint) || !isPositive(footprint.width) || !isPositive(footprint.depth))
     return "footprint needs a width and a depth above zero";
+  const { height } = footprint;
+  if (height !== undefined && !(Number.isInteger(height) && Number(height) >= 0))
+    return "footprint height must be a whole number of levels, zero or more";
   return propsProblem(value.props, value.looks);
 }
+
+/** How many levels tall an object stands: zero when its file doesn't say. */
+export const heightOf = (def: ObjectDef): number => def.footprint.height ?? 0;
 
 /** Checks each object file. Throws on the first bad one, naming it. */
 export function readObjects(files: Readonly<Record<string, unknown>>): ObjectDef[] {

@@ -3,7 +3,7 @@
 import { createArbiter, needDrive, urgencies } from "../agent/drives.ts";
 import type { Content } from "../content/content.ts";
 import { type CreatureDef, instinctsOf } from "../content/creatures.ts";
-import type { ObjectDef } from "../content/objects.ts";
+import { type ObjectDef, heightOf } from "../content/objects.ts";
 import type { Scenario } from "../content/scenarios.ts";
 import { knownPredicates } from "../content/vocabulary.ts";
 import { TICKS_PER_SECOND } from "../kernel/clock.ts";
@@ -51,7 +51,13 @@ const objectEntity = (def: ObjectDef, id: string, [x, y]: Spot): Entity => ({
   id,
   position: { x, y },
   level: 0,
-  props: { ...def.props, kind: def.id, width: def.footprint.width, depth: def.footprint.depth },
+  props: {
+    ...def.props,
+    kind: def.id,
+    width: def.footprint.width,
+    depth: def.footprint.depth,
+    height: heightOf(def),
+  },
 });
 
 function creatureEntity(
