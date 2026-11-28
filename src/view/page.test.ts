@@ -6,7 +6,7 @@ import { type Source, importsOf, sources } from "../evals/sources.ts";
 
 const ENTRY = "src/web/main.ts";
 const WEB = "src/web/";
-const CHARACTER = "src/web/duck.ts";
+const CHARACTER = "src/web/character.ts";
 const NODE_IMPORT = /from\s+"node:/;
 const PAGE_THINGS =
   /\b(?:document|window|navigator|location)\.|\b(?:requestAnimationFrame|HTMLCanvasElement|CanvasRenderingContext2D)\b/;

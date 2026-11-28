@@ -92,7 +92,7 @@ function face(context: CanvasRenderingContext2D, eyesShut: boolean): void {
 }
 
 /** Draws the duck standing on its shape. `beat` alternates 0 and 1 to make a walk step. */
-export function drawDuck(context: CanvasRenderingContext2D, shape: Shape, beat: number): void {
+export function drawCharacter(context: CanvasRenderingContext2D, shape: Shape, beat: number): void {
   const walking = shape.pose === "walking";
   context.save();
   context.translate(shape.x, shape.y);

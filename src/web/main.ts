@@ -8,7 +8,7 @@ import { loadScenarios } from "../content/scenarios.ts";
 import { createRun } from "../evals/run.ts";
 import { TICKS_PER_SECOND } from "../kernel/clock.ts";
 import { fromAddress } from "../view/address.ts";
-import { drawDuck } from "./duck.ts";
+import { drawCharacter } from "./character.ts";
 import { lines } from "../view/agents.ts";
 import { type Shape, type ViewModel, boundsOf, viewModel } from "../view/model.ts";
 
@@ -69,7 +69,7 @@ function drawAgent(context: CanvasRenderingContext2D, shape: Shape, beat: number
   context.beginPath();
   context.ellipse(shape.x, shape.y, shape.width, shape.height, 0, 0, Math.PI * 2);
   context.fill();
-  drawDuck(context, shape, beat);
+  drawCharacter(context, shape, beat);
 }
 
 /** Anything else: a box with a top and a front, outlined when believed in, and labelled. */
