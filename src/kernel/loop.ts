@@ -205,6 +205,15 @@ function happen(run: Run, t: number, events: TraceEvent[]): readonly Entity[] {
   return arriving;
 }
 
+/** Lets the agent's learners see the tick's events, and logs each note they add or change. */
+function learnFrom(agent: Agent, events: readonly TraceEvent[], emit: Log): void {
+  const before = agent.memory.notes.map((note) => JSON.stringify(note));
+  for (const learn of agent.setup.learners) learn(events);
+  agent.memory.notes.forEach((note, i) => {
+    if (JSON.stringify(note) !== before[i]) emit("learn", { note });
+  });
+}
+
 function runTick(run: Run): void {
   const { agents } = run;
   const t = run.clock.tick();
@@ -229,7 +238,7 @@ function runTick(run: Run): void {
     const action = act(agent, choices[i] ?? null, ended, emitFor(agent));
     if (action) run.requests.set(agent.id, action);
   });
-  for (const agent of agents) for (const learn of agent.setup.learners) learn(events);
+  for (const agent of agents) learnFrom(agent, events, emitFor(agent));
   for (const event of events) run.trace.append(event);
 }
 

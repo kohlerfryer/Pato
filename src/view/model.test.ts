@@ -20,7 +20,7 @@ const food: Entity = {
   props: { kind: "food", width: 2, depth: 1 },
 };
 const world = createWorld([food, duck]);
-const box = { id: "food-1", shape: "box", level: 0, label: "food", known: false };
+const box = { id: "food-1", shape: "block", level: 0, label: "food", known: false };
 const circle = { id: "duck-1", shape: "circle", level: 1, label: "duck", known: false };
 const frame: Frame = {
   bounds: { minX: -10, minY: -5, maxX: 10, maxY: 5 },
@@ -111,7 +111,7 @@ describe("viewModel", () => {
 
   it("[S-DRAW-2] draws as a circle whatever acts, and as a box whatever doesn't", () => {
     const { shapes } = viewModel({ world, events: [], frame });
-    expect(shapes.map(({ shape }) => shape)).toEqual(["box", "box"]);
+    expect(shapes.map(({ shape }) => shape)).toEqual(["block", "block"]);
   });
 
   it("[S-DRAW-2] gives each agent its goal and its thought, in words", () => {

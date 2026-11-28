@@ -69,6 +69,19 @@ describe("exploring", () => {
     expect(plan({ beliefs, notes: [...tried, note("use", "soft")] })?.skill).toBe("lift");
   });
 
+  it("[S-PLAN-5] does not propose the same try twice, even when its note is not among those shown", () => {
+    const planner = createStubPlanner("me");
+    const ask = () =>
+      planner({ goal: curious, beliefs: [seen("b", "soft")], skills: tryers, notes: [] });
+    expect([ask()?.skill, ask()?.skill, ask()?.skill, ask()?.skill, ask()]).toEqual([
+      "poke",
+      "lift",
+      "hop",
+      "visit",
+      null,
+    ]);
+  });
+
   it("[S-PLAN-5] guesses from what the same action did to other things", () => {
     const fed: Condition = { subject: "$self", predicate: "hunger", op: "below", value: 0.01 };
     const choice = plan({ beliefs: [seen("b", "soft")], notes: [note("use", "edible", fed)] });

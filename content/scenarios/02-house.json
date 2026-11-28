@@ -1,0 +1,41 @@
+{
+  "id": "02-house",
+  "horizon_s": 900,
+  "seeds": [1, 2, 3],
+  "respawn_s": 30,
+  "setup": {
+    "objects": [
+      {
+        "kind": "food",
+        "at": [5, 2]
+      },
+      {
+        "kind": "food",
+        "at": [-3, 4]
+      },
+      {
+        "kind": "nest",
+        "at": [-4, -3]
+      }
+    ],
+    "agents": [
+      {
+        "creature": "duck",
+        "at": [0, 0],
+        "state": {
+          "hunger": 0.3,
+          "sleepiness": 0.3
+        }
+      }
+    ]
+  },
+  "triggers": [
+    {
+      "at_s": 60,
+      "spawn": {
+        "kind": "house",
+        "at": [1, -4]
+      }
+    }
+  ]
+}

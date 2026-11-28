@@ -104,10 +104,11 @@ function choose(goal: Condition, search: Search, depth: number): PlanOutput | nu
   return null;
 }
 
-/** A planner for the agent `self`. */
+/** A planner for the agent `self`. It remembers which tries it has proposed. */
 export function createStubPlanner(self: EntityId): Planner {
+  const proposed = new Set<string>();
   return ({ goal, beliefs, skills, notes }) => {
-    if (goal.predicate === CURIOSITY) return explore(beliefs, notes, skills, self);
+    if (goal.predicate === CURIOSITY) return explore({ beliefs, notes, skills }, self, proposed);
     const ids = beliefs.flatMap((fact) =>
       fact.object === undefined ? [fact.subject] : [fact.subject, fact.object],
     );
