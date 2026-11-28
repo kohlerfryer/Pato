@@ -1,14 +1,22 @@
 {
   "properties": {
     "edible": "Using it removes it and lowers the user's hunger by this much.",
-    "soft": "Using it is resting on it: sleepiness falls by this much each second."
+    "soft": "Using it is resting on it: sleepiness falls by this much each second.",
+    "grabbable": "It can be picked up and carried.",
+    "flat_top": "Its top can be stood on.",
+    "has_opening": "It can be walked into.",
+    "roof": "Being inside it, or holding it, keeps the rain off."
   },
   "relations": {
-    "near": "The object is within the agent's reach."
+    "near": "The object is within the agent's reach.",
+    "inside": "The agent is within the thing it names.",
+    "holding": "The agent is carrying the thing it names."
   },
   "states": {
     "hunger": "How hungry the agent is, from 0 to 1.",
     "sleepiness": "How sleepy the agent is, from 0 to 1.",
-    "level": "How high the agent stands: the ground is 0."
+    "level": "How high the agent stands: the ground is 0.",
+    "wet": "Whether the agent is wet.",
+    "under_cover": "Whether something keeps the rain off the agent."
   }
 }

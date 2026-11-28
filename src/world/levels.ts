@@ -5,6 +5,7 @@
 
 import { apart, covers, withinReach } from "./geometry.ts";
 import { carry } from "./hands.ts";
+import { affords } from "./property.ts";
 import { type Entity, type WorldState, amount, find, withEntity } from "./state.ts";
 import type { ActionRule } from "./step.ts";
 
@@ -12,7 +13,7 @@ const topOf = (entity: Entity): number => entity.level + amount(entity, "height"
 
 /** Whether `object` has a flat top that covers where `agent` stands. */
 const beneath = (object: Entity, agent: Entity): boolean =>
-  object.props.flat_top === true &&
+  affords(object, "canStandOn") &&
   object.id !== agent.id &&
   object.id !== agent.props.holding &&
   covers(object, agent.position);
@@ -31,7 +32,7 @@ function place(
 export const jump: ActionRule = (state, actorId) => {
   const actor = find(state, actorId);
   const landing = state.entities
-    .filter((object) => actor && object.props.flat_top === true && object.id !== actor.id)
+    .filter((object) => actor && affords(object, "canStandOn") && object.id !== actor.id)
     .filter((object) => actor && topOf(object) === actor.level + 1 && withinReach(actor, object))
     .sort((a, b) => (actor ? apart(actor, a) - apart(actor, b) : 0) || (a.id < b.id ? -1 : 1))[0];
   if (!actor || !landing)

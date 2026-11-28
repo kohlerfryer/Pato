@@ -5,7 +5,7 @@ import { TICKS_PER_SECOND } from "../kernel/clock.ts";
 import { CLOSE_ENOUGH, covers, radius, withinReach } from "./geometry.ts";
 import { carry, drop, grab } from "./hands.ts";
 import { jump, settle } from "./levels.ts";
-import { type PropertyRule, propertyRules } from "./property.ts";
+import { type PropertyRule, affords, propertyRules } from "./property.ts";
 import { type Entity, type WorldState, amount, find, withEntity } from "./state.ts";
 import type { ActionRule } from "./step.ts";
 
@@ -29,7 +29,7 @@ function aimAt(state: WorldState, actor: Entity, target: Target): Aim | undefine
   if (typeof target !== "string") return { ...target, level: actor.level, radius: reach };
   const entity = find(state, target);
   if (!entity) return undefined;
-  const into = entity.props.has_opening === true;
+  const into = affords(entity, "canEnter");
   return { ...entity.position, level: entity.level, radius: into ? 0 : radius(entity) + reach };
 }
 
@@ -39,7 +39,7 @@ function blocked(state: WorldState, actor: Entity, moved: Entity): boolean {
     (object) =>
       object.id !== actor.id &&
       object.id !== actor.props.holding &&
-      object.props.has_opening !== true &&
+      !affords(object, "canEnter") &&
       object.level <= actor.level &&
       actor.level < object.level + amount(object, "height") &&
       covers(object, moved.position) &&

@@ -5,6 +5,7 @@
 
 import { TICKS_PER_SECOND } from "../kernel/clock.ts";
 import { covers } from "./geometry.ts";
+import { affords } from "./property.ts";
 import { type Entity, type WorldState, amount, find } from "./state.ts";
 
 /** How long under cover it takes to dry off. */
@@ -14,7 +15,7 @@ const DRYING_TICKS = 5 * TICKS_PER_SECOND;
 function insideOf(state: WorldState, agent: Entity): Entity | undefined {
   return state.entities.find(
     (object) =>
-      object.props.has_opening === true &&
+      affords(object, "canEnter") &&
       object.id !== agent.id &&
       object.level <= agent.level &&
       agent.level < object.level + Math.max(1, amount(object, "height")) &&
@@ -25,7 +26,7 @@ function insideOf(state: WorldState, agent: Entity): Entity | undefined {
 function underCover(state: WorldState, agent: Entity, around: Entity | undefined): boolean {
   const held =
     typeof agent.props.holding === "string" ? find(state, agent.props.holding) : undefined;
-  return around?.props.roof === true || held?.props.roof === true;
+  return [around, held].some((thing) => thing !== undefined && affords(thing, "keepsRainOff"));
 }
 
 /** Wet in the rain without cover; dry once under cover for long enough. */

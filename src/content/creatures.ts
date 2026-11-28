@@ -21,6 +21,8 @@ export interface CreatureDef {
   /** How fast each of its needs grows, per second. */
   readonly rates: Readonly<Record<string, number>>;
   readonly instincts: readonly Instinct[];
+  /** States it wants to be false, such as being wet. Each needs a weight. */
+  readonly dislikes?: readonly string[];
 }
 
 const INSTINCT_FIELDS = ["id", "params", "pre", "effects", "body"];
@@ -46,9 +48,21 @@ function numbersProblem(value: Record<string, unknown>): string | null {
   return amounts === undefined ? null : `${amounts} must map names to numbers of zero or more`;
 }
 
+function dislikesProblem({ dislikes, weights }: Record<string, unknown>): string | null {
+  if (dislikes === undefined) return null;
+  const weighed = (name: unknown): boolean =>
+    typeof name === "string" && isRecord(weights) && typeof weights[name] === "number";
+  return Array.isArray(dislikes) && dislikes.every(weighed)
+    ? null
+    : "dislikes must list states, each with a weight";
+}
+
 function creatureProblem(value: unknown, stem: string): string | null {
   if (!isRecord(value)) return "must be an object";
-  const fields = fieldsProblem(value, CREATURE_FIELDS) ?? numbersProblem(value);
+  const fields =
+    fieldsProblem(value, CREATURE_FIELDS, ["dislikes"]) ??
+    numbersProblem(value) ??
+    dislikesProblem(value);
   if (fields !== null) return fields;
   if (value.id !== stem) return `id must be "${stem}", the file's name`;
   if (!Array.isArray(value.instincts)) return "instincts must be a list";

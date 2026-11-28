@@ -25,6 +25,13 @@ const file = "content/creatures/hen.json";
 const reading = (creature: unknown) => (): unknown => readCreatures({ [file]: creature });
 
 describe("readCreatures", () => {
+  it("[S-DRIVE-5] reads the states a creature dislikes, each with a weight", () => {
+    const fussy = { ...hen, weights: { hunger: 1, wet: 0.9 }, dislikes: ["wet"] };
+    expect(readCreatures({ [file]: fussy })).toEqual([fussy]);
+    expect(reading({ ...hen, dislikes: "wet" })).toThrow(file);
+    expect(reading({ ...hen, dislikes: ["wet"] })).toThrow(file);
+  });
+
   it("[S-OBJ-3] reads a creature with an id, speed, reach, sight, weights, rates and instincts", () => {
     expect(readCreatures({ [file]: hen })).toEqual([hen]);
   });
