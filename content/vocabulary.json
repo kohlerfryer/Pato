@@ -17,6 +17,7 @@
     "sleepiness": "How sleepy the agent is, from 0 to 1.",
     "level": "How high the agent stands: the ground is 0.",
     "wet": "Whether the agent is wet.",
-    "under_cover": "Whether something keeps the rain off the agent."
+    "under_cover": "Whether something keeps the rain off the agent.",
+    "at": "Where a thing stands: along, across, and its level."
   }
 }

@@ -16,6 +16,13 @@ const SIGHT_TTL = TICKS_PER_SECOND;
 /** For each kind of object, which of its properties show at a glance. */
 type Kinds = ReadonlyMap<string, { readonly looks: readonly string[] }>;
 
+/** Where a thing stands, as "along,across,level", to the hundredth. */
+const where = ({ position, level }: Entity): string =>
+  [position.x, position.y]
+    .map((n) => Number(n.toFixed(2)))
+    .concat(level)
+    .join(",");
+
 export function createSight(kinds: Kinds, rules: ReadonlyMap<string, PropertyRule>): Sensor {
   const blocksSight = (entity: Entity): boolean =>
     Object.entries(entity.props).some(([name, strength]) =>
@@ -36,6 +43,7 @@ export function createSight(kinds: Kinds, rules: ReadonlyMap<string, PropertyRul
         ...(kinds.get(String(entity.props.kind))?.looks ?? []).map((name) =>
           stamp({ subject: entity.id, predicate: name, value: true }),
         ),
+        stamp({ subject: entity.id, predicate: "at", value: where(entity) }),
         stamp({
           subject: self,
           predicate: "near",
