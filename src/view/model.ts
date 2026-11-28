@@ -5,7 +5,7 @@
  */
 
 import type { TraceEvent } from "../kernel/trace.ts";
-import { type AgentView, follow } from "./agents.ts";
+import { type AgentView, type Pose, follow } from "./agents.ts";
 import { type Entity, type WorldState, amount } from "../world/state.ts";
 
 interface Bounds {
@@ -21,7 +21,7 @@ export interface Frame {
   readonly viewport: { readonly width: number; readonly height: number };
 }
 
-interface Shape {
+export interface Shape {
   readonly id: string;
   /** Whatever acts is a circle. Everything else is a block. */
   readonly shape: "circle" | "block";
@@ -37,6 +37,8 @@ interface Shape {
   readonly label: string;
   /** Whether some agent believes something about it right now. */
   readonly known: boolean;
+  /** How it holds itself, if it acts. */
+  readonly pose: Pose | null;
 }
 
 /** How far an agent can see, as the patch of ground around it. */
@@ -123,7 +125,8 @@ export function viewModel(input: {
   readonly previous?: ViewModel;
 }): ViewModel {
   const agents = follow(input.previous?.agents ?? [], input.events);
-  const acting = new Set(agents.map(({ id }) => id));
+  const poses = new Map(agents.map(({ id, pose }) => [id, pose]));
+  const acting = new Set(poses.keys());
   const known = believedAbout(agents);
   const place = fit(input.frame);
   const farFirst = [...input.world.entities].sort((a, b) => b.position.y - a.position.y);
@@ -141,6 +144,7 @@ export function viewModel(input: {
       level: entity.level,
       label: String(entity.props.kind ?? entity.id),
       known: known.has(entity.id),
+      pose: poses.get(entity.id) ?? null,
     };
   });
   const sights = farFirst

@@ -8,6 +8,7 @@ import { loadScenarios } from "../content/scenarios.ts";
 import { createRun } from "../evals/run.ts";
 import { TICKS_PER_SECOND } from "../kernel/clock.ts";
 import { fromAddress } from "../view/address.ts";
+import { drawDuck } from "./duck.ts";
 import { lines } from "../view/agents.ts";
 import { type ViewModel, boundsOf, viewModel } from "../view/model.ts";
 
@@ -22,7 +23,8 @@ const BOX = "#d9b97f";
 const FRONT = "#b08a4f";
 const FIELD = "#dcebb5";
 const SHADE = "rgba(60, 40, 10, 0.18)";
-const CIRCLE = "#f2c14e";
+/** How many frames each step of a walk lasts. */
+const FRAMES_PER_STEP = 8;
 
 /** Makes the canvas as sharp as the screen allows. Returns how many canvas pixels make one screen pixel. */
 function sharpen(canvas: HTMLCanvasElement): number {
@@ -36,7 +38,12 @@ function sharpen(canvas: HTMLCanvasElement): number {
   return ratio;
 }
 
-function draw(context: CanvasRenderingContext2D, view: ViewModel, ratio: number): void {
+function draw(
+  context: CanvasRenderingContext2D,
+  view: ViewModel,
+  ratio: number,
+  beat: number,
+): void {
   context.fillStyle = FIELD;
   context.fillRect(0, 0, context.canvas.width, context.canvas.height);
   context.font = `${String(LABEL_PX * ratio)}px system-ui, sans-serif`;
@@ -50,25 +57,24 @@ function draw(context: CanvasRenderingContext2D, view: ViewModel, ratio: number)
     context.stroke();
   }
   context.setLineDash([]);
-  for (const { shape, x, y, width, height, tall, level, label, known } of view.shapes) {
+  for (const shape of view.shapes) {
+    const { x, y, width, height, tall, level, label, known } = shape;
     const left = x - width / 2;
     const near = y + height / 2;
     context.beginPath();
-    if (shape === "circle") {
+    if (shape.shape === "circle") {
       context.fillStyle = SHADE;
       context.ellipse(x, y, width / 2, height / 2, 0, 0, Math.PI * 2);
       context.fill();
-      context.beginPath();
-      context.fillStyle = CIRCLE;
-      context.arc(x, y - width / 2, width / 2, 0, Math.PI * 2);
+      drawDuck(context, shape, beat);
     } else {
       context.fillStyle = FRONT;
       context.fillRect(left, near - tall, width, tall);
       context.fillStyle = BOX;
       context.rect(left, y - height / 2 - tall, width, height);
+      context.fill();
+      if (known) context.stroke();
     }
-    context.fill();
-    if (known) context.stroke();
     context.fillStyle = INK;
     const text = level > 0 ? `${label} (up ${String(level)})` : label;
     context.fillText(text, x, near + LABEL_PX * ratio * 1.2);
@@ -91,6 +97,7 @@ function start(canvas: HTMLCanvasElement, status: HTMLElement): void {
   const bounds = boundsOf(kernel.world, MARGIN);
   let view: ViewModel | undefined;
   let seen = 0;
+  let frames = 0;
   let last: number | undefined;
   let owed = MS_PER_TICK;
 
@@ -108,7 +115,8 @@ function start(canvas: HTMLCanvasElement, status: HTMLElement): void {
       frame: { bounds, viewport },
       ...(view ? { previous: view } : {}),
     });
-    draw(context, view, ratio);
+    frames += 1;
+    draw(context, view, ratio, Math.floor(frames / FRAMES_PER_STEP) % 2);
     status.textContent = view.agents.flatMap(lines).join("\n");
     requestAnimationFrame(frame);
   };

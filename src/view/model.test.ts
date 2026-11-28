@@ -20,8 +20,15 @@ const food: Entity = {
   props: { kind: "food", width: 2, depth: 1 },
 };
 const world = createWorld([food, duck]);
-const box = { id: "food-1", shape: "block", level: 0, label: "food", known: false };
-const circle = { id: "duck-1", shape: "circle", level: 1, label: "duck", known: false };
+const box = { id: "food-1", shape: "block", level: 0, label: "food", known: false, pose: null };
+const circle = {
+  id: "duck-1",
+  shape: "circle",
+  level: 1,
+  label: "duck",
+  known: false,
+  pose: "standing",
+};
 const frame: Frame = {
   bounds: { minX: -10, minY: -5, maxX: 10, maxY: 5 },
   viewport: { width: 400, height: 200 },
