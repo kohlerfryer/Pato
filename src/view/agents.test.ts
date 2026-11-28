@@ -140,7 +140,31 @@ describe("why an agent acts", () => {
       skill: null,
       action: null,
       failure: null,
+      pose: "standing",
     });
+  });
+});
+
+describe("pose", () => {
+  const starts = (kind: string): TraceEvent =>
+    event("action", { phase: "start", action: { kind } });
+  const ends = event("action", { phase: "end", action: { kind: "use" }, status: "done" });
+
+  it("[S-DRAW-8] walks while moving, is busy while using something, and stands otherwise", () => {
+    expect(after([starts("move_to")])?.pose).toBe("walking");
+    expect(after([starts("use")])?.pose).toBe("busy");
+    expect(after([starts("jump")])?.pose).toBe("standing");
+    expect(after([starts("grab")])?.pose).toBe("standing");
+  });
+
+  it("[S-DRAW-8] stands again once the action ends, however it ended", () => {
+    expect(after([starts("use"), ends])?.pose).toBe("standing");
+    const cut = event("action", {
+      phase: "end",
+      action: { kind: "move_to" },
+      status: "interrupted",
+    });
+    expect(after([starts("move_to"), cut])?.pose).toBe("standing");
   });
 });
 

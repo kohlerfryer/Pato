@@ -18,6 +18,9 @@ interface Believed {
   readonly text: string;
 }
 
+/** How an agent holds itself, from the action it has in progress. */
+export type Pose = "walking" | "busy" | "standing";
+
 export interface AgentView {
   readonly id: string;
   /** What it wants, in words, or null when it wants nothing. */
@@ -34,6 +37,7 @@ export interface AgentView {
   readonly action: string | null;
   /** What last failed, and why. */
   readonly failure: string | null;
+  readonly pose: Pose;
 }
 
 const words = (parts: readonly unknown[]): string =>
@@ -117,11 +121,18 @@ function skillEvent(agent: AgentView, { phase, skill, reason }: Data): AgentView
   return { ...agent, skill: null, failure };
 }
 
+/** Walking while moving, busy while using something, standing for anything over in a moment. */
+function poseFor(action: unknown): Pose {
+  const { kind } = record(action);
+  if (kind === "move_to") return "walking";
+  return kind === "use" ? "busy" : "standing";
+}
+
 function actionEvent(agent: AgentView, { phase, action, status, reason }: Data): AgentView {
-  if (phase === "start") return { ...agent, action: actionText(action) };
+  if (phase === "start") return { ...agent, action: actionText(action), pose: poseFor(action) };
   const failed = status === "failed";
   const failure = failed ? words([`${String(record(action).kind)}:`, reason]) : agent.failure;
-  return { ...agent, action: null, failure };
+  return { ...agent, action: null, failure, pose: "standing" };
 }
 
 function urgenciesIn(data: Data): Record<string, number> {
@@ -153,6 +164,7 @@ const unknown = (id: string): AgentView => ({
   skill: null,
   action: null,
   failure: null,
+  pose: "standing",
 });
 
 /** The picture of each agent, brought up to date with `events`, in id order. */

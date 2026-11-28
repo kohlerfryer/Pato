@@ -6,6 +6,7 @@ import { type Source, importsOf, sources } from "../evals/sources.ts";
 
 const ENTRY = "src/web/main.ts";
 const WEB = "src/web/";
+const CHARACTER = "src/web/duck.ts";
 const NODE_IMPORT = /from\s+"node:/;
 const PAGE_THINGS =
   /\b(?:document|window|navigator|location)\.|\b(?:requestAnimationFrame|HTMLCanvasElement|CanvasRenderingContext2D)\b/;
@@ -49,6 +50,13 @@ describe("the page", () => {
     const touching = all.filter(({ text }) => PAGE_THINGS.test(text)).map(({ path }) => path);
     expect(touching.filter((path) => !path.startsWith(WEB))).toEqual([]);
     expect(touching).toContain(ENTRY);
+  });
+
+  it("[S-DRAW-7] draws the character from the view model and nothing else", () => {
+    const renderer = byPath.get(CHARACTER);
+    expect(renderer).toBeDefined();
+    expect(renderer && importsOf(renderer)).toEqual(["src/view/model.ts"]);
+    expect(importsOf(byPath.get(ENTRY) ?? { path: ENTRY, text: "" })).toContain(CHARACTER);
   });
 
   it("[S-DRAW-6] is imported by no code outside src/web", () => {
