@@ -1,6 +1,7 @@
 /** Picking things up and putting them down. A held object goes wherever its holder goes. */
 
 import { withinReach } from "./geometry.ts";
+import { affords } from "./property.ts";
 import { type Entity, type WorldState, find, withEntity } from "./state.ts";
 import type { ActionRule } from "./step.ts";
 
@@ -23,7 +24,7 @@ export function carry(state: WorldState, holder: Entity): WorldState {
 export const grab: ActionRule = (state, actorId, action) => {
   const actor = find(state, actorId);
   const object = action.kind === "grab" ? find(state, action.target) : undefined;
-  if (!actor || object?.props.grabbable !== true) return failed(state, "not_grabbable");
+  if (!actor || !object || !affords(object, "canGrab")) return failed(state, "not_grabbable");
   if (actor.props.holding !== undefined) return failed(state, "hands_full");
   if (!withinReach(actor, object)) return failed(state, "too_far");
   const holder = { ...actor, props: { ...actor.props, holding: object.id } };

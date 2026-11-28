@@ -1,6 +1,6 @@
 /** Turns a scenario file into a running world: entities placed, agents wired up, triggers timed. */
 
-import { createArbiter, needDrive, urgencies } from "../agent/drives.ts";
+import { createArbiter, dislikeDrive, needDrive, urgencies } from "../agent/drives.ts";
 import type { Content } from "../content/content.ts";
 import { type CreatureDef, instinctsOf } from "../content/creatures.ts";
 import { type ObjectDef, heightOf } from "../content/objects.ts";
@@ -77,7 +77,10 @@ function creatureEntity(
 }
 
 function agentSetup(id: string, def: CreatureDef, sensors: readonly Sensor[]): AgentSetup {
-  const drives = Object.keys(def.weights).map(needDrive);
+  const drives = [
+    ...Object.keys(def.rates).map(needDrive),
+    ...(def.dislikes ?? []).map(dislikeDrive),
+  ];
   return {
     id,
     sensors,

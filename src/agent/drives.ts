@@ -34,6 +34,17 @@ export function needDrive(state: string): Drive {
   };
 }
 
+/** A drive against a state the body reports as true or false, such as being wet. */
+export function dislikeDrive(state: string): Drive {
+  return {
+    name: state,
+    goal: { subject: "$self", predicate: state, op: "is", value: false },
+    discomfort(belief, self) {
+      return belief.get({ subject: self, predicate: state })?.value === true ? 1 : 0;
+    },
+  };
+}
+
 /** Each drive's urgency: its discomfort, kept between 0 and 1, times the creature's weight for it. */
 export function urgencies(
   drives: readonly Drive[],

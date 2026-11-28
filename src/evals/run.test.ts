@@ -89,6 +89,13 @@ describe("createRun", () => {
     expect(hunger).toBeGreaterThan(sleepiness ?? 1);
   });
 
+  it("[S-DRIVE-5] gives an agent a drive for each state its creature dislikes", () => {
+    const { kernel } = createRun(pond, content, 1);
+    kernel.tick();
+    const [why] = select(parseTrace(kernel.trace.text()), "drive");
+    expect(Object.keys(why?.data.urgencies ?? {})).toContain("wet");
+  });
+
   it("[S-WORLD-7] starts and stops the rain at the times its triggers give, and logs each", () => {
     const wet: Scenario = {
       ...pond,

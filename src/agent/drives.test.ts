@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { type Belief, createBelief } from "./belief.ts";
 import { holds } from "./condition.ts";
-import { createArbiter, needDrive, urgencies } from "./drives.ts";
+import { createArbiter, dislikeDrive, needDrive, urgencies } from "./drives.ts";
 
-function feeling(levels: Record<string, number>): Belief {
+function feeling(levels: Record<string, number | boolean>): Belief {
   const belief = createBelief();
   for (const [predicate, value] of Object.entries(levels))
     belief.add({
@@ -88,5 +88,25 @@ describe("arbiter", () => {
   it("[S-DRIVE-2] breaks an exact tie by drive name", () => {
     const decide = createArbiter(drives, { hunger: 1, sleepiness: 1 }, "me");
     expect(wanted(decide(feeling({ hunger: 0.5, sleepiness: 0.5 }), 1))).toBe("hunger");
+  });
+});
+
+describe("dislikes", () => {
+  const wet = dislikeDrive("wet");
+
+  it("[S-DRIVE-5] is fully uncomfortable while the agent believes it is wet, and not at all otherwise", () => {
+    expect(wet.discomfort(feeling({ wet: true }), "me")).toBe(1);
+    expect(wet.discomfort(feeling({ wet: false }), "me")).toBe(0);
+    expect(wet.discomfort(feeling({}), "me")).toBe(0);
+  });
+
+  it("[S-DRIVE-5] wants the disliked state to be false", () => {
+    expect(wet.goal).toEqual({ subject: "$self", predicate: "wet", op: "is", value: false });
+    expect(holds(wet.goal, feeling({ wet: false }), { self: "me" })).toBe(true);
+  });
+
+  it("[S-DRIVE-5] sets the goal when being wet matters more than being hungry", () => {
+    const choose = createArbiter([needDrive("hunger"), wet], { hunger: 1, wet: 0.9 }, "me");
+    expect(choose(feeling({ hunger: 0.4, wet: true }), 1)?.predicate).toBe("wet");
   });
 });
