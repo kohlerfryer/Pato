@@ -108,6 +108,11 @@ function agentSetup(id: string, def: CreatureDef, sensors: readonly Sensor[]): A
   };
 }
 
+/** The world's action rules, with what each kind of object does when used. */
+export function worldRules(objects: readonly ObjectDef[]): ReturnType<typeof actionRules> {
+  return actionRules(new Map(objects.flatMap(({ id, use }) => (use ? [[id, use]] : []))));
+}
+
 /** One run of `scenario` with `seed`, ready to tick. */
 export function createRun(scenario: Scenario, content: Content, seed: number): Run {
   const { objects, creatures, words } = content;
@@ -142,7 +147,7 @@ export function createRun(scenario: Scenario, content: Content, seed: number): R
       [...things, ...agents.map(({ entity }) => entity)],
       ticksIn(scenario.respawn_s),
     ),
-    rules: actionRules(),
+    rules: worldRules(objects),
     agents: agents.map(({ setup }) => setup),
     known: knownPredicates(words),
     arrivals: (t) => arriving.get(t) ?? [],

@@ -1,5 +1,6 @@
 /** Objects are data: one file each in `content/objects/`, found by the loader and nowhere else. */
 
+import { type UseStep, useProblem } from "../world/uses.ts";
 import { fieldsProblem, isPositive, isRecord, readFiles } from "./check.ts";
 
 export interface ObjectDef {
@@ -12,7 +13,7 @@ export interface ObjectDef {
   /** Its size on the ground, and how many levels tall it stands. */
   readonly footprint: { readonly width: number; readonly depth: number; readonly height?: number };
   /** What using it does, beyond what its properties already do. */
-  readonly use?: unknown;
+  readonly use?: readonly UseStep[];
 }
 
 const isPlain = (value: unknown): boolean =>
@@ -25,18 +26,25 @@ function propsProblem(props: unknown, looks: unknown): string | null {
   return seen ? null : "looks must list names from props";
 }
 
-function objectProblem(value: unknown, stem: string): string | null {
-  if (!isRecord(value)) return "must be an object";
-  const fields = fieldsProblem(value, ["id", "looks", "props", "footprint"], ["use"]);
-  if (fields !== null) return fields;
-  if (value.id !== stem) return `id must be "${stem}", the file's name`;
-  const { footprint } = value;
+function footprintProblem(footprint: unknown): string | null {
   if (!isRecord(footprint) || !isPositive(footprint.width) || !isPositive(footprint.depth))
     return "footprint needs a width and a depth above zero";
   const { height } = footprint;
   if (height !== undefined && !(Number.isInteger(height) && Number(height) >= 0))
     return "footprint height must be a whole number of levels, zero or more";
-  return propsProblem(value.props, value.looks);
+  return null;
+}
+
+function objectProblem(value: unknown, stem: string): string | null {
+  if (!isRecord(value)) return "must be an object";
+  const fields = fieldsProblem(value, ["id", "looks", "props", "footprint"], ["use"]);
+  if (fields !== null) return fields;
+  if (value.id !== stem) return `id must be "${stem}", the file's name`;
+  return (
+    footprintProblem(value.footprint) ??
+    (value.use === undefined ? null : useProblem(value.use)) ??
+    propsProblem(value.props, value.looks)
+  );
 }
 
 /** How many levels tall an object stands: zero when its file doesn't say. */

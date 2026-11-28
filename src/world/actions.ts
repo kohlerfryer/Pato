@@ -8,6 +8,7 @@ import { jump, settle } from "./levels.ts";
 import { type PropertyRule, affords, propertyRules } from "./property.ts";
 import { type Entity, type WorldState, amount, find, withEntity } from "./state.ts";
 import type { ActionRule } from "./step.ts";
+import { type UseStep, applyUse } from "./uses.ts";
 
 const UNREACHABLE = { status: "failed", reason: "unreachable" } as const;
 const DONE = { status: "done" } as const;
@@ -76,28 +77,57 @@ function aimedAt(state: WorldState, actor: Entity, target: string | undefined): 
   return typeof id === "string" ? find(state, id) : undefined;
 }
 
+/** The first of `object`'s properties, by name, whose rule says what using it does, on `state`. */
+function byProperty(
+  rules: ReadonlyMap<string, PropertyRule>,
+  state: WorldState,
+  actor: Entity,
+  object: Entity,
+): ReturnType<ActionRule> | null {
+  const named = Object.entries(object.props).sort(([a], [b]) => (a < b ? -1 : 1));
+  for (const [name, strength] of named) {
+    const use = rules.get(name)?.use;
+    if (use) return use(state, actor, object, strength);
+  }
+  return null;
+}
+
+/** What using `object` does: its own steps, if its kind has any, then its properties. */
+function used(
+  rules: ReadonlyMap<string, PropertyRule>,
+  steps: readonly UseStep[] | undefined,
+  state: WorldState,
+  [actor, object]: readonly [Entity, Entity],
+): ReturnType<ActionRule> {
+  const after = steps ? applyUse(state, actor, object, steps) : state;
+  const [user, thing] = [find(after, actor.id) ?? actor, find(after, object.id) ?? object];
+  const result = byProperty(rules, after, user, thing);
+  if (result) return result;
+  return steps ? { state: after, outcome: DONE } : failed(state, "no_effect");
+}
+
 /**
- * Uses an object: the one named, if it is within reach, or else the one held. What happens is up
- * to the object's properties, and the first one, by name, that can be used decides.
+ * Uses an object: the one named, if it is within reach, or else the one held. What its object file
+ * says using it does happens first, from `uses` by its kind. Then the first of its properties, by
+ * name, that can be used has its say.
  */
-export function createUse(rules: ReadonlyMap<string, PropertyRule>): ActionRule {
+export function createUse(
+  rules: ReadonlyMap<string, PropertyRule>,
+  uses: ReadonlyMap<string, readonly UseStep[]> = new Map(),
+): ActionRule {
   return (state, actorId, action) => {
     const actor = find(state, actorId);
     if (!actor || action.kind !== "use") return failed(state, "nothing_to_use");
     const object = aimedAt(state, actor, action.target);
     if (!object) return failed(state, "nothing_to_use");
     if (action.target !== undefined && !withinReach(actor, object)) return failed(state, "too_far");
-    for (const [name, strength] of Object.entries(object.props).sort(([a], [b]) =>
-      a < b ? -1 : 1,
-    )) {
-      const use = rules.get(name)?.use;
-      if (use) return use(state, actor, object, strength);
-    }
-    return failed(state, "no_effect");
+    return used(rules, uses.get(String(object.props.kind)), state, [actor, object]);
   };
 }
 
 /** The rule for every action the world knows how to carry out. */
-export function actionRules(): Record<Action["kind"], ActionRule> {
-  return { move_to: moveTo, use: createUse(propertyRules()), grab, drop, jump };
+export function actionRules(
+  uses: ReadonlyMap<string, readonly UseStep[]> = new Map(),
+): Record<Action["kind"], ActionRule> {
+  return { move_to: moveTo, use: createUse(propertyRules(), uses), grab, drop, jump };
 }
