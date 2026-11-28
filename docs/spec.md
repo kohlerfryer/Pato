@@ -200,9 +200,10 @@ type Planner = (input: PlanInput) => PlanOutput | null | Promise<PlanOutput | nu
 - **S-PLAN-2** (R-18, phase 1): A planner's choice runs only if its skill is registered, every argument names a believed entity with the properties the parameter asks for, and the skill's preconditions hold in belief; otherwise it is logged as invalid and the agent idles.
 - **S-PLAN-3** (R-14, phase 1): Code under `src/planner/` and `src/agent/` imports nothing from `src/world/` or `src/sim/`.
 - **S-PLAN-4** (R-01, phase 2): The stub planner picks a skill whose effects satisfy the goal, chaining backward through preconditions to a depth of 5, and breaks ties by skill id.
-- **S-PLAN-5** (R-02, phase 3): For a curiosity goal, the stub planner proposes an action on a visible property it has no note for, in a fixed order, with a guess of the outcome.
+- **S-PLAN-5** (R-02, phase 3): For a curiosity goal, the stub planner proposes an action on a visible property it has no note for, in a fixed order, with a guess of the outcome; once every such action has a note, it repeats the least-tried one on the most curious thing in view.
 - **S-PLAN-6** (R-03, phase 3): The stub planner chains through notes as well as skills: a note saying an action on a property produced an effect counts as a way to reach that effect.
 - **S-PLAN-7** (R-07, phase 5): For a goal no chain reaches, the planner proposes candidate action sequences; each is tried in the world, a failure is recorded as a note, and no candidate is tried twice.
+- **S-PLAN-9** (R-03, phase 3): For a goal that no skill or note reaches, the stub planner proposes an action as it does for curiosity.
 - **S-PLAN-8** (R-06, phase 4): When neither a chain nor an untried candidate remains for a request, the planner's result is a refusal that says so.
 
 ## Executor and registry
@@ -251,7 +252,7 @@ interface Note {
 - **S-MEM-5** (R-11, phase 6): A note whose score is below 0.3 is not used for chaining, and its property counts as untried for curiosity.
 - **S-MEM-6** (R-10, phase 6): Memory holds at most 200 notes and drops the least recently used.
 - **S-LEARN-1** (R-23, phase 3): A learner is given only trace events and writes only its own store.
-- **S-LEARN-2** (R-02, phase 3): After an exploratory action, the note learner records as its effect the changes in belief during the next second.
+- **S-LEARN-2** (R-02, phase 3): After an exploratory action, the note learner records as its effect the changes in belief from the action's start until the agent's next action starts, over at least one second and at most ten.
 - **S-LEARN-3** (R-05, phase 4): A laugh is credited to the skills that ended in the 4 seconds before it, most recent first, each getting half the credit of the one after it.
 - **S-LEARN-4** (R-05, phase 4): Each skill has a funniness estimate, updated only by arithmetic on credited laughs.
 - **S-LEARN-5** (R-05, phase 4): During play, skills are chosen by Thompson sampling over those estimates, with a penalty for each recent repeat.
