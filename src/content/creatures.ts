@@ -21,12 +21,23 @@ export interface CreatureDef {
   /** How fast each of its needs grows, per second. */
   readonly rates: Readonly<Record<string, number>>;
   readonly instincts: readonly Instinct[];
+  /** How fast a note's score follows new tries, from 0 to 1. */
+  readonly learning_rate: number;
   /** States it wants to be false, such as being wet. Each needs a weight. */
   readonly dislikes?: readonly string[];
 }
 
 const INSTINCT_FIELDS = ["id", "params", "pre", "effects", "body"];
-const CREATURE_FIELDS = ["id", "speed", "reach", "sight", "weights", "rates", "instincts"];
+const CREATURE_FIELDS = [
+  "id",
+  "speed",
+  "reach",
+  "sight",
+  "weights",
+  "rates",
+  "learning_rate",
+  "instincts",
+];
 
 const isAmounts = (value: unknown): boolean =>
   isRecord(value) && Object.values(value).every((each) => typeof each === "number" && each >= 0);
@@ -44,6 +55,9 @@ function instinctProblem(value: unknown): string | null {
 function numbersProblem(value: Record<string, unknown>): string | null {
   const flat = ["speed", "reach", "sight"].find((name) => !isPositive(value[name]));
   if (flat !== undefined) return `${flat} must be a number above zero`;
+  const rate = value.learning_rate;
+  if (typeof rate !== "number" || rate <= 0 || rate > 1)
+    return "learning_rate must be above zero and at most 1";
   const amounts = ["weights", "rates"].find((name) => !isAmounts(value[name]));
   return amounts === undefined ? null : `${amounts} must map names to numbers of zero or more`;
 }

@@ -1,6 +1,14 @@
 /** Turns a scenario file into a running world: entities placed, agents wired up, triggers timed. */
 
-import { createArbiter, dislikeDrive, needDrive, urgencies } from "../agent/drives.ts";
+import {
+  CURIOSITY,
+  createArbiter,
+  curiosityDrive,
+  dislikeDrive,
+  needDrive,
+  urgencies,
+} from "../agent/drives.ts";
+import { createNoteLearner } from "../learners/notes.ts";
 import type { Content } from "../content/content.ts";
 import { type CreatureDef, instinctsOf } from "../content/creatures.ts";
 import { type ObjectDef, heightOf } from "../content/objects.ts";
@@ -78,9 +86,11 @@ function creatureEntity(
 }
 
 function agentSetup(id: string, def: CreatureDef, sensors: readonly Sensor[]): AgentSetup {
+  const learner = createNoteLearner(id, def.learning_rate);
   const drives = [
     ...Object.keys(def.rates).map(needDrive),
     ...(def.dislikes ?? []).map(dislikeDrive),
+    ...(CURIOSITY in def.weights ? [curiosityDrive(learner.notes)] : []),
   ];
   return {
     id,
@@ -89,8 +99,12 @@ function agentSetup(id: string, def: CreatureDef, sensors: readonly Sensor[]): A
     urgencies: (belief) => urgencies(drives, def.weights, belief, id),
     planner: createStubPlanner(id),
     skills: instinctsOf(def),
-    notes: [],
-    learners: [],
+    notes: learner.notes(),
+    learners: [
+      (events) => {
+        learner.learn(events);
+      },
+    ],
   };
 }
 

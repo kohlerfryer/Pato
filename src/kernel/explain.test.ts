@@ -122,3 +122,31 @@ describe("forgetting", () => {
     expect(logged(ran({ sensors: [always] }, 20), "fact")).toHaveLength(1);
   });
 });
+
+describe("what the planner is shown of memory", () => {
+  it("[S-MEM-4] is at most 8 notes, those bearing on the goal first", () => {
+    const shown: number[] = [];
+    const filler = Array.from({ length: 10 }, (_, i) => ({
+      action: "use" as const,
+      property: `p${String(i)}`,
+      effect: { subject: "$self", predicate: "other", op: "is" as const, value: true },
+      tries: 1,
+      score: 1,
+    }));
+    const climbing = { action: "use" as const, property: "q", effect: up, tries: 1, score: 1 };
+    const kernel = ran(
+      {
+        drives: () => up,
+        notes: [...filler, climbing],
+        planner: ({ notes }) => {
+          shown.push(notes.length);
+          expect(notes[0]).toEqual(climbing);
+          return null;
+        },
+      },
+      1,
+    );
+    expect(kernel.agents[0]?.memory.notes).toHaveLength(11);
+    expect(shown).toEqual([8]);
+  });
+});

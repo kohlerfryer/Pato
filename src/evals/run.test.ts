@@ -73,7 +73,9 @@ describe("createRun", () => {
     kernel.tick();
     const [duck] = kernel.agents;
     expect(duck?.id).toBe("duck-1");
-    expect(duck?.registry.list().map((skill) => skill.id)).toEqual(["eat", "rest"]);
+    const born = content.creatures.find(({ id }) => id === "duck")?.instincts.map(({ id }) => id);
+    expect(duck?.registry.list().map((skill) => skill.id)).toEqual(born);
+    expect(born?.length).toBeGreaterThan(2);
     expect(duck?.belief.get({ subject: "duck-1", predicate: "hunger" })).toBeDefined();
     expect(duck?.belief.get({ subject: "food-1", predicate: "edible" })?.value).toBe(true);
     expect(select(parseTrace(kernel.trace.text()), "goal")).toHaveLength(1);

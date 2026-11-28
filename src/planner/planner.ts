@@ -19,8 +19,8 @@ export interface Note {
   readonly score: number;
 }
 
-/** A skill as the planner sees it: what it needs and what it achieves, without how. */
-type SkillView = Pick<Skill, "id" | "params" | "pre" | "effects">;
+/** A skill as the planner sees it: what it needs, what it achieves, and the actions it takes. */
+type SkillView = Pick<Skill, "id" | "params" | "pre" | "effects" | "body">;
 
 export interface PlanInput {
   readonly goal: Condition;

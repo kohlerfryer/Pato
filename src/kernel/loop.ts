@@ -5,6 +5,7 @@
 
 import type { Action, Outcome } from "../agent/action.ts";
 import { type Belief, createBelief, forPlanner } from "../agent/belief.ts";
+import { inView, retrieve } from "../agent/notes.ts";
 import { choiceProblem } from "../agent/choice.ts";
 import { type Condition, holds } from "../agent/condition.ts";
 import { type Executor, createExecutor } from "../agent/executor.ts";
@@ -45,7 +46,8 @@ interface Agent {
   readonly setup: AgentSetup;
   readonly belief: Belief;
   readonly registry: Registry;
-  readonly memory: { readonly notes: Note[] };
+  /** The agent's notes, shared with whatever learner writes them. */
+  readonly memory: { readonly notes: readonly Note[] };
   readonly executor: Executor;
   goal: Condition | null;
 }
@@ -75,7 +77,7 @@ function createAgent(setup: AgentSetup): Agent {
     setup,
     belief: createBelief(),
     registry,
-    memory: { notes: [...setup.notes] },
+    memory: { notes: setup.notes },
     executor: createExecutor(),
     goal: null,
   };
@@ -118,8 +120,12 @@ function plan(agent: Agent, emit: Log): PlanOutput | null {
     beliefs: forPlanner(agent.belief),
     skills: agent.registry
       .list()
-      .map(({ id, params, pre, effects }) => ({ id, params, pre, effects })),
-    notes: agent.memory.notes,
+      .map(({ id, params, pre, effects, body }) => ({ id, params, pre, effects, body })),
+    notes: retrieve(
+      agent.memory.notes,
+      agent.goal,
+      [...inView(agent.belief.facts(), agent.id).values()].flat(),
+    ),
   });
   if (!choice) return null;
   const { registry, belief, id: self } = agent;
