@@ -110,7 +110,7 @@ This is the duck's whole body, like the buttons on a controller. What `use` does
 - **S-ACT-2** (R-13, phase 1): Every action ends as `done`, `failed` or `interrupted` with a reason, and both its start and its end are in the trace.
 - **S-ACT-3** (R-01, phase 2): `move_to` moves the agent toward its target at the creature's speed and ends `done` when the target is within reach, or `failed` with `unreachable` when it is on another level.
 - **S-ACT-4** (R-01, phase 2): `use` with no target applies to the held object, and with a target applies to that object when it is within reach; otherwise it fails with `nothing_to_use` or `too_far`.
-- **S-ACT-5** (R-02, R-07, phase 3): `jump` raises the agent one level onto a `flat_top` within reach whose top is exactly one level above it; otherwise it fails with `nothing_to_land_on`.
+- **S-ACT-5** (R-02, R-07, phase 3): `jump` raises the agent one level onto a `flat_top` within reach whose top (S-OBJ-6) is exactly one level above it; otherwise it fails with `nothing_to_land_on`.
 - **S-ACT-6** (R-02, R-07, phase 3): `grab` succeeds only on a `grabbable` object within reach while the agent holds nothing, and a held object moves with the agent.
 - **S-ACT-7** (R-02, R-07, phase 3): `drop` puts the held object at the agent's position and level.
 - **S-ACT-8** (R-07, phase 3): An agent that moves off the edge of what it stands on falls to the level beneath.
@@ -142,7 +142,7 @@ type EventType = "fact" | "drive" | "goal" | "plan" | "skill" | "action" | "lear
 
 ## World
 
-Positions are 2D, plus a level: the ground is 0, a crate's top is 1, a roof is 2. Behaviour belongs to properties, so most new objects need no code.
+Positions are 2D, plus a level: the ground is 0, a crate's top is 1, a roof is 2. An object stands a whole number of levels tall, given in its footprint, so its top is its own level plus its height: a crate is 1 tall, a house 2, and food or a nest 0. Behaviour belongs to properties, so most new objects need no code.
 
 - **S-WORLD-1** (R-12, phase 1): World state is a list of entities, each with an id, a position, a level and properties, and only the world step changes it.
 - **S-WORLD-2** (R-01, phase 2): Hunger and sleepiness rise each tick at the rates in the creature file and never exceed 1.
@@ -265,12 +265,13 @@ interface Note {
   "id": "umbrella",
   "looks": ["grabbable"],
   "props": { "grabbable": true },
-  "footprint": { "width": 1, "depth": 1 },
+  "footprint": { "width": 1, "depth": 1, "height": 0 },
   "use": { "toggle": "open", "while_on": { "add": ["roof"] } }
 }
 ```
 
 - **S-OBJ-1** (R-09, phase 2): An object is one JSON file with `id`, `looks`, `props`, `footprint` and an optional `use`; a file that fails validation stops the load and names the file.
+- **S-OBJ-6** (R-07, R-09, phase 3): A footprint's `height` is a whole number of levels, zero or more, and is zero when left out; an object's top is its level plus its height.
 - **S-OBJ-2** (R-09, phase 2): Every file in `content/objects/` is loaded, and nothing else registers an object.
 - **S-OBJ-3** (R-08, phase 2): A creature is one JSON file with `id`, `speed`, `reach`, `sight`, drive `weights`, `rates` and `instincts`.
 - **S-OBJ-4** (R-09, phase 6): On load, each object is placed in an empty world and every action is applied to it; a crash, or a changed fact its file does not declare, fails the load.
