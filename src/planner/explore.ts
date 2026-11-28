@@ -6,7 +6,7 @@
 
 import type { Action } from "../agent/action.ts";
 import type { Condition } from "../agent/condition.ts";
-import type { EntityId, Fact } from "../agent/fact.ts";
+import type { EntityId } from "../agent/fact.ts";
 import { NOTHING, inView } from "../agent/notes.ts";
 import type { Note, PlanInput, PlanOutput } from "./planner.ts";
 
@@ -48,15 +48,19 @@ function hunch(action: Kind, notes: readonly Note[]): string {
   return best ? `maybe ${words(best.effect)}` : "no idea";
 }
 
-/** An action not yet noted on a property in view, as a skill to run, or null if none is left. */
+/**
+ * An action not yet tried on a property in view, as a skill to run, or null if none is left. A try
+ * counts once it has a note, or once it has been proposed, which `proposed` remembers: the notes
+ * shown may not include every try.
+ */
 export function explore(
-  beliefs: readonly Fact[],
-  notes: readonly Note[],
-  skills: readonly SkillView[],
+  { beliefs, notes, skills }: Pick<PlanInput, "beliefs" | "notes" | "skills">,
   self: EntityId,
+  proposed: Set<string>,
 ): PlanOutput | null {
   const ways = tryers(skills);
   const tried = (action: Kind, property: string): boolean =>
+    proposed.has(`${action} ${property}`) ||
     notes.some((note) => note.action === action && note.property === property);
   const things = [...inView(beliefs, self)].sort(([a], [b]) => (a < b ? -1 : 1));
   const options = things.flatMap(([thing, properties]) =>
@@ -68,6 +72,7 @@ export function explore(
     const way = ways.get(action);
     if (!way || tried(action, property)) continue;
     const guess = `${action} the ${property} thing: ${hunch(action, notes)}`;
+    proposed.add(`${action} ${property}`);
     return { skill: way.skill.id, args: { [way.param]: thing }, guess };
   }
   return null;

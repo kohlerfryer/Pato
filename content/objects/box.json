@@ -1,0 +1,6 @@
+{
+  "id": "box",
+  "looks": ["has_opening", "grabbable"],
+  "props": { "has_opening": true, "grabbable": true },
+  "footprint": { "width": 1.2, "depth": 1.2, "height": 1 }
+}

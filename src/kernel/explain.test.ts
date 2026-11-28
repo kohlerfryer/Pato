@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Condition } from "../agent/condition.ts";
 import type { Fact } from "../agent/fact.ts";
+import type { Note } from "../planner/planner.ts";
 import { createWorld } from "../world/state.ts";
 import { type AgentSetup, type Kernel, type Sensor, createKernel } from "./loop.ts";
 
@@ -148,5 +149,23 @@ describe("what the planner is shown of memory", () => {
     );
     expect(kernel.agents[0]?.memory.notes).toHaveLength(11);
     expect(shown).toEqual([8]);
+  });
+});
+
+describe("what an agent learns", () => {
+  it("[S-TRACE-2] logs each note a learner adds or changes, as a learn event", () => {
+    const notes: Note[] = [];
+    const first: Note = { action: "use", property: "soft", effect: up, tries: 1, score: 1 };
+    let tick = 0;
+    const learner = (): void => {
+      tick += 1;
+      if (tick === 2) notes.push(first);
+      if (tick === 3) notes.splice(0, 1, { ...first, tries: 2 });
+    };
+    const kernel = ran({ notes, learners: [learner], drives: () => up, planner: () => null }, 4);
+    expect(logged(kernel, "learn")).toEqual([
+      { t: 2, note: first },
+      { t: 3, note: { ...first, tries: 2 } },
+    ]);
   });
 });

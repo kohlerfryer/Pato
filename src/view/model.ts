@@ -23,8 +23,8 @@ export interface Frame {
 
 interface Shape {
   readonly id: string;
-  /** Whatever acts is a circle. Everything else is a box. */
-  readonly shape: "circle" | "box";
+  /** Whatever acts is a circle. Everything else is a block. */
+  readonly shape: "circle" | "block";
   /** The centre of the patch of ground it covers, in screen pixels. */
   readonly x: number;
   readonly y: number;
@@ -132,7 +132,7 @@ export function viewModel(input: {
     const { x, y, scale } = place(across, up);
     return {
       id: entity.id,
-      shape: acting.has(entity.id) ? "circle" : "box",
+      shape: acting.has(entity.id) ? "circle" : "block",
       x,
       y,
       width: (amount(entity, "width") || DEFAULT_SIZE) * scale,

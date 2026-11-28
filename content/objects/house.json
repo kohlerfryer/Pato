@@ -1,0 +1,6 @@
+{
+  "id": "house",
+  "looks": ["has_opening", "roof"],
+  "props": { "has_opening": true, "roof": true },
+  "footprint": { "width": 3, "depth": 3, "height": 2 }
+}
