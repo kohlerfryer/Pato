@@ -11,6 +11,7 @@ import { type AgentSetup, type Kernel, type Sensor, createKernel } from "../kern
 import type { Trace } from "../kernel/trace.ts";
 import { createStubPlanner } from "../planner/stub.ts";
 import { createBody } from "../sense/body.ts";
+import { remembering } from "../sense/recall.ts";
 import { createSight } from "../sense/sight.ts";
 import { actionRules } from "../world/actions.ts";
 import { propertyRules } from "../world/property.ts";
@@ -101,7 +102,7 @@ export function createRun(scenario: Scenario, content: Content, seed: number): R
     objectEntity(named(objects, kind, scenario), name(kind), at);
   const things = scenario.setup.objects.map(({ kind, at }) => placed(kind, at));
   const sensors = [
-    createSight(new Map(objects.map((def) => [def.id, def])), propertyRules()),
+    remembering(createSight(new Map(objects.map((def) => [def.id, def])), propertyRules())),
     createBody({ states: Object.keys(words.states), relations: Object.keys(words.relations) }),
   ];
   const agents = scenario.setup.agents.map(({ creature, at, state }) => {
