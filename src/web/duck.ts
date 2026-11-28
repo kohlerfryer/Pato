@@ -14,8 +14,8 @@ const BEAK_LINE = "#c97c10";
 const BLUSH = "rgba(246, 169, 163, 0.85)";
 /** Where the feet meet the ground, in the drawing's own box. */
 const FEET = { x: 150, y: 270 };
-/** How wide the drawing is against its shape: a little wider, as the head and tail stick out. */
-const WIDTH_IN_BOX = 100;
+/** How many of the drawing's units span its shape's width. The duck stands well wider than its spot. */
+const WIDTH_IN_BOX = 60;
 /** How far a walking duck rocks from side to side, in radians. */
 const ROCK = 0.05;
 const STEP = 10;

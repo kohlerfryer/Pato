@@ -10,7 +10,7 @@ import { TICKS_PER_SECOND } from "../kernel/clock.ts";
 import { fromAddress } from "../view/address.ts";
 import { drawDuck } from "./duck.ts";
 import { lines } from "../view/agents.ts";
-import { type ViewModel, boundsOf, viewModel } from "../view/model.ts";
+import { type Shape, type ViewModel, boundsOf, viewModel } from "../view/model.ts";
 
 /** Room to leave around the scene, in world units. */
 const MARGIN = 2;
@@ -58,27 +58,34 @@ function draw(
   }
   context.setLineDash([]);
   for (const shape of view.shapes) {
-    const { x, y, width, height, tall, level, label, known } = shape;
-    const left = x - width / 2;
-    const near = y + height / 2;
-    context.beginPath();
-    if (shape.shape === "circle") {
-      context.fillStyle = SHADE;
-      context.ellipse(x, y, width / 2, height / 2, 0, 0, Math.PI * 2);
-      context.fill();
-      drawDuck(context, shape, beat);
-    } else {
-      context.fillStyle = FRONT;
-      context.fillRect(left, near - tall, width, tall);
-      context.fillStyle = BOX;
-      context.rect(left, y - height / 2 - tall, width, height);
-      context.fill();
-      if (known) context.stroke();
-    }
-    context.fillStyle = INK;
-    const text = level > 0 ? `${label} (up ${String(level)})` : label;
-    context.fillText(text, x, near + LABEL_PX * ratio * 1.2);
+    if (shape.shape === "circle") drawAgent(context, shape, beat);
+    else drawThing(context, shape, ratio);
   }
+}
+
+/** An agent: the duck, on a soft shadow as wide as it stands. */
+function drawAgent(context: CanvasRenderingContext2D, shape: Shape, beat: number): void {
+  context.fillStyle = SHADE;
+  context.beginPath();
+  context.ellipse(shape.x, shape.y, shape.width, shape.height, 0, 0, Math.PI * 2);
+  context.fill();
+  drawDuck(context, shape, beat);
+}
+
+/** Anything else: a box with a top and a front, outlined when believed in, and labelled. */
+function drawThing(context: CanvasRenderingContext2D, shape: Shape, ratio: number): void {
+  const { x, y, width, height, tall, level, label, known } = shape;
+  const near = y + height / 2;
+  context.fillStyle = FRONT;
+  context.fillRect(x - width / 2, near - tall, width, tall);
+  context.fillStyle = BOX;
+  context.beginPath();
+  context.rect(x - width / 2, y - height / 2 - tall, width, height);
+  context.fill();
+  if (known) context.stroke();
+  context.fillStyle = INK;
+  const text = level > 0 ? `${label} (up ${String(level)})` : label;
+  context.fillText(text, x, near + LABEL_PX * ratio * 1.2);
 }
 
 function start(canvas: HTMLCanvasElement, status: HTMLElement): void {
