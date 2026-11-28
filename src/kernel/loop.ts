@@ -153,6 +153,8 @@ interface KernelSetup {
   readonly known?: ReadonlySet<string>;
   /** What appears in the world at tick `t`, if anything. */
   readonly arrivals?: (t: number) => readonly Entity[];
+  /** Whether it starts or stops raining at tick `t`; undefined leaves the weather as it is. */
+  readonly weather?: (t: number) => boolean | undefined;
 }
 
 /** Everything one run holds between ticks. */
@@ -184,6 +186,19 @@ function sense(run: Run, t: number, events: TraceEvent[]): Fact[][] {
   return sensed;
 }
 
+/** Changes the weather if it is due to change, and says what arrives this tick. Both are logged. */
+function happen(run: Run, t: number, events: TraceEvent[]): readonly Entity[] {
+  const raining = run.setup.weather?.(t);
+  if (raining !== undefined) {
+    run.world = { ...run.world, raining };
+    events.push({ t, agent: null, type: "world", data: { raining } });
+  }
+  const arriving = run.setup.arrivals?.(t) ?? [];
+  if (arriving.length > 0)
+    events.push({ t, agent: null, type: "world", data: { arrived: arriving.map(({ id }) => id) } });
+  return arriving;
+}
+
 function runTick(run: Run): void {
   const { agents } = run;
   const t = run.clock.tick();
@@ -193,11 +208,9 @@ function runTick(run: Run): void {
     (type, data) =>
       events.push({ t, agent: id, type, data });
 
-  const arriving = run.setup.arrivals?.(t) ?? [];
+  const arriving = happen(run, t, events);
   const stepped = step(run.world, run.requests, run.setup.rules, arriving);
   run.world = stepped.state;
-  if (arriving.length > 0)
-    events.push({ t, agent: null, type: "world", data: { arrived: arriving.map(({ id }) => id) } });
   const sensed = sense(run, t, events);
   agents.forEach((agent, i) => {
     takeIn(agent, sensed[i] ?? [], t, emitFor(agent));
