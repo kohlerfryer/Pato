@@ -56,12 +56,15 @@ export interface ViewModel {
 
 /** How wide and deep to draw something that has no footprint of its own, in world units. */
 const DEFAULT_SIZE = 1;
-/** How tall everything stands. Nothing says how tall a thing is yet. */
-const TALL = 0.5;
+/** How tall to draw something that is flat on the ground, in world units, so it can be seen. */
+const FLAT = 0.5;
 /** How much a step away from the viewer moves a thing up the screen, against a step sideways. */
 const SQUASH = 0.5;
 /** How far up the screen one level lifts a thing, in world units. */
 const LIFT = 1;
+
+/** How tall to draw a thing: its height in levels, or a little when it is flat. */
+const tallOf = (entity: Entity): number => amount(entity, "height") * LIFT || FLAT;
 
 /** Where an entity's centre appears before scaling: across, and up the screen. */
 const seenAt = (entity: Entity): { across: number; up: number } => ({
@@ -78,7 +81,8 @@ export function boundsOf(world: WorldState, margin: number): Bounds {
     minX: Math.min(0, ...xs) - margin,
     minY: Math.min(0, ...ys) - margin,
     maxX: Math.max(0, ...xs) + margin,
-    maxY: Math.max(0, ...ys.map((up) => up + TALL)) + margin,
+    maxY:
+      Math.max(0, ...world.entities.map((entity) => seenAt(entity).up + tallOf(entity))) + margin,
   };
 }
 
@@ -133,7 +137,7 @@ export function viewModel(input: {
       y,
       width: (amount(entity, "width") || DEFAULT_SIZE) * scale,
       height: (amount(entity, "depth") || DEFAULT_SIZE) * SQUASH * scale,
-      tall: TALL * scale,
+      tall: tallOf(entity) * scale,
       level: entity.level,
       label: String(entity.props.kind ?? entity.id),
       known: known.has(entity.id),

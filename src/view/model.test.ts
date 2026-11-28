@@ -93,6 +93,14 @@ describe("viewModel", () => {
     expect(low?.x).toBe(high?.x);
   });
 
+  it("[S-DRAW-2] draws a thing as tall as its height in levels, and a flat thing a little tall", () => {
+    const house: Entity = { ...food, id: "house-1", props: { ...food.props, height: 2 } };
+    const [tall, flat] = viewModel({ world: createWorld([house, food]), events: [], frame }).shapes;
+    expect(tall?.tall).toBe(40);
+    expect(flat?.tall).toBe(10);
+    expect(boundsOf(createWorld([house]), 0).maxY).toBe(4.5);
+  });
+
   it("[S-DRAW-2] lists shapes from far to near, so nearer things are drawn over farther ones", () => {
     const behind: Entity = { ...food, id: "food-2", position: { x: 0, y: 8 } };
     const front: Entity = { ...food, id: "food-3", position: { x: 0, y: -8 } };
