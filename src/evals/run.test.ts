@@ -89,6 +89,29 @@ describe("createRun", () => {
     expect(hunger).toBeGreaterThan(sleepiness ?? 1);
   });
 
+  it("[S-WORLD-7] starts and stops the rain at the times its triggers give, and logs each", () => {
+    const wet: Scenario = {
+      ...pond,
+      triggers: [
+        { at_s: 1, rain: true },
+        { at_s: 2, rain: false },
+      ],
+    };
+    const { kernel } = createRun(wet, content, 1);
+    const raining: boolean[] = [];
+    for (let i = 0; i < 2 * TICKS_PER_SECOND; i++) {
+      kernel.tick();
+      raining.push(kernel.world.raining);
+    }
+    expect(raining.indexOf(true)).toBe(TICKS_PER_SECOND - 1);
+    expect(raining.lastIndexOf(true)).toBe(2 * TICKS_PER_SECOND - 2);
+    const logged = select(parseTrace(kernel.trace.text()), "world").map(({ t, data }) => [t, data]);
+    expect(logged).toEqual([
+      [TICKS_PER_SECOND, { raining: true }],
+      [2 * TICKS_PER_SECOND, { raining: false }],
+    ]);
+  });
+
   it("[S-EVAL-1] fires a timed trigger at its time, and logs it", () => {
     const due = 2 * TICKS_PER_SECOND;
     expect(ids(pond, due - 1)).not.toContain("food-3");

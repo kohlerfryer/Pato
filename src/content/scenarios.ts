@@ -26,9 +26,13 @@ export interface Scenario {
       readonly state: Readonly<Record<string, number>>;
     }[];
   };
-  /** Things that appear partway through. */
-  readonly triggers: readonly { readonly at_s: number; readonly spawn: Placement }[];
+  /** What happens partway through: something appears, or the rain starts or stops. */
+  readonly triggers: readonly Trigger[];
 }
+
+type Trigger =
+  | { readonly at_s: number; readonly spawn: Placement }
+  | { readonly at_s: number; readonly rain: boolean };
 
 const FIELDS = ["id", "horizon_s", "seeds", "respawn_s", "setup", "triggers"];
 
@@ -53,10 +57,10 @@ const isAgent = (value: unknown): boolean =>
 
 const isTrigger = (value: unknown): boolean =>
   isRecord(value) &&
-  fieldsProblem(value, ["at_s", "spawn"]) === null &&
   typeof value.at_s === "number" &&
   value.at_s >= 0 &&
-  isPlacement(value.spawn);
+  ((fieldsProblem(value, ["at_s", "spawn"]) === null && isPlacement(value.spawn)) ||
+    (fieldsProblem(value, ["at_s", "rain"]) === null && typeof value.rain === "boolean"));
 
 const isListOf = (value: unknown, each: (item: unknown) => boolean): boolean =>
   Array.isArray(value) && value.every(each);
@@ -84,7 +88,7 @@ function scenarioProblem(value: unknown, stem: string): string | null {
   if (fields !== null) return fields;
   if (value.id !== stem) return `id must be "${stem}", the file's name`;
   if (!isListOf(value.triggers, isTrigger))
-    return "each trigger needs a time and something to spawn";
+    return "each trigger needs a time, and something to spawn or whether it rains";
   return timingProblem(value) ?? setupProblem(value.setup);
 }
 

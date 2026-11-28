@@ -20,6 +20,17 @@ const reading = (scenario: unknown) => (): unknown => readScenarios({ [file]: sc
 const setup = (over: object): unknown => ({ ...pond, setup: { ...pond.setup, ...over } });
 
 describe("readScenarios", () => {
+  it("[S-WORLD-7] reads a trigger that starts or stops the rain", () => {
+    const wet = {
+      ...pond,
+      triggers: [
+        { at_s: 5, rain: true },
+        { at_s: 9, rain: false },
+      ],
+    };
+    expect(readScenarios({ [file]: wet })).toEqual([wet]);
+  });
+
   it("[S-EVAL-1] reads a scenario with a setup, timed triggers, a horizon and seeds", () => {
     expect(readScenarios({ [file]: pond })).toEqual([pond]);
   });
@@ -53,6 +64,11 @@ describe("readScenarios", () => {
       { ...pond, triggers: [{ at_s: -1, spawn: { kind: "nest", at: [3, 3] } }] },
     ],
     ["a trigger that spawns nothing", { ...pond, triggers: [{ at_s: 5, spawn: {} }] }],
+    ["rain that is neither on nor off", { ...pond, triggers: [{ at_s: 5, rain: "yes" }] }],
+    [
+      "a trigger that both rains and spawns",
+      { ...pond, triggers: [{ at_s: 5, rain: true, spawn: { kind: "nest", at: [3, 3] } }] },
+    ],
   ])("[S-EVAL-1] refuses %s, naming the file", (_what, scenario) => {
     expect(reading(scenario)).toThrow(file);
   });

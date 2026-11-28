@@ -107,9 +107,15 @@ export function createRun(scenario: Scenario, content: Content, seed: number): R
     return { entity: creatureEntity(def, id, at, state), setup: agentSetup(id, def, sensors) };
   });
   const arriving = new Map<number, Entity[]>();
-  for (const { at_s: seconds, spawn } of scenario.triggers) {
-    const due = Math.max(1, ticksIn(seconds));
-    arriving.set(due, [...(arriving.get(due) ?? []), placed(spawn.kind, spawn.at)]);
+  const weather = new Map<number, boolean>();
+  for (const trigger of scenario.triggers) {
+    const due = Math.max(1, ticksIn(trigger.at_s));
+    if ("rain" in trigger) weather.set(due, trigger.rain);
+    else
+      arriving.set(due, [
+        ...(arriving.get(due) ?? []),
+        placed(trigger.spawn.kind, trigger.spawn.at),
+      ]);
   }
   const kernel = createKernel({
     seed,
@@ -122,6 +128,7 @@ export function createRun(scenario: Scenario, content: Content, seed: number): R
     agents: agents.map(({ setup }) => setup),
     known: knownPredicates(words),
     arrivals: (t) => arriving.get(t) ?? [],
+    weather: (t) => weather.get(t),
   });
   return { kernel, ticks: ticksIn(scenario.horizon_s) };
 }
