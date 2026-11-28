@@ -3,6 +3,7 @@
 import type { Action } from "../agent/action.ts";
 import { TICKS_PER_SECOND } from "../kernel/clock.ts";
 import { CLOSE_ENOUGH, radius, withinReach } from "./geometry.ts";
+import { carry, drop, grab } from "./hands.ts";
 import { type PropertyRule, propertyRules } from "./property.ts";
 import { type Entity, type WorldState, amount, find, withEntity } from "./state.ts";
 import type { ActionRule } from "./step.ts";
@@ -39,7 +40,8 @@ export const moveTo: ActionRule = (state, actorId, action) => {
   const stride = Math.min(gap, amount(actor, "speed") / TICKS_PER_SECOND);
   const scale = stride / Math.hypot(dx, dy);
   const position = { x: actor.position.x + dx * scale, y: actor.position.y + dy * scale };
-  const next = withEntity(state, { ...actor, position });
+  const moved = { ...actor, position };
+  const next = carry(withEntity(state, moved), moved);
   return gap - stride <= CLOSE_ENOUGH ? { state: next, outcome: DONE } : { state: next };
 };
 
@@ -76,6 +78,6 @@ export function createUse(rules: ReadonlyMap<string, PropertyRule>): ActionRule 
 }
 
 /** The rule for every action the world knows how to carry out. */
-export function actionRules(): Record<"move_to" | "use", ActionRule> {
-  return { move_to: moveTo, use: createUse(propertyRules()) };
+export function actionRules(): Record<"move_to" | "use" | "grab" | "drop", ActionRule> {
+  return { move_to: moveTo, use: createUse(propertyRules()), grab, drop };
 }
