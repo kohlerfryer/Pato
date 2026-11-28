@@ -3,7 +3,7 @@
  * plus its height. An agent can jump one level up onto a flat top, and falls when it walks off one.
  */
 
-import { CLOSE_ENOUGH, apart, withinReach } from "./geometry.ts";
+import { apart, covers, withinReach } from "./geometry.ts";
 import { carry } from "./hands.ts";
 import { type Entity, type WorldState, amount, find, withEntity } from "./state.ts";
 import type { ActionRule } from "./step.ts";
@@ -15,8 +15,7 @@ const beneath = (object: Entity, agent: Entity): boolean =>
   object.props.flat_top === true &&
   object.id !== agent.id &&
   object.id !== agent.props.holding &&
-  Math.abs(object.position.x - agent.position.x) <= amount(object, "width") / 2 + CLOSE_ENOUGH &&
-  Math.abs(object.position.y - agent.position.y) <= amount(object, "depth") / 2 + CLOSE_ENOUGH;
+  covers(object, agent.position);
 
 /** Moves `agent` and what it holds to a new place and level. */
 function place(

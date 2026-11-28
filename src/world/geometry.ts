@@ -36,3 +36,11 @@ export function crosses(from: Entity, to: Entity, blocker: Entity): boolean {
     Math.hypot(blocker.position.x - nearest.x, blocker.position.y - nearest.y) < radius(blocker)
   );
 }
+
+/** Whether `position` lies within `object`'s footprint, edges included. */
+export function covers(object: Entity, position: Entity["position"]): boolean {
+  return (
+    Math.abs(object.position.x - position.x) <= amount(object, "width") / 2 + CLOSE_ENOUGH &&
+    Math.abs(object.position.y - position.y) <= amount(object, "depth") / 2 + CLOSE_ENOUGH
+  );
+}
