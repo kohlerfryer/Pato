@@ -325,7 +325,8 @@ A plain viewer makes every phase watchable from phase 2 on, in any browser, incl
 ## Real senses and character drawing
 
 - **S-REAL-1** (R-21, phase 7): Camera, speech and laughter sensors emit the same fact types as the simulated kid, and no image or audio is written to belief, memory, trace or disk.
-- **S-DRAW-7** (R-30, phase 7): The character renderer draws from the same view model as the plain viewer.
+- **S-DRAW-7** (R-30, phase 3): The character renderer draws from the same view model as the plain viewer.
+- **S-DRAW-8** (R-30, phase 3): The view model gives each agent a pose from the action it has in progress: walking while it moves, busy while it uses something, and standing otherwise.
 
 ## Open decisions
 
