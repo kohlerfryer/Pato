@@ -55,20 +55,23 @@ describe("the note learner", () => {
     ]);
   });
 
-  it("[S-LEARN-2] waits out the second before noting anything", () => {
-    expect(learned([...eating, later(10 + second)])).toEqual([]);
+  it("[S-LEARN-2] notes the try as soon as the action ends, with what changed while it ran", () => {
+    expect(learned(eating).map(({ effect }) => effect.predicate)).toEqual(["hunger"]);
   });
 
-  it("[S-LEARN-2] counts changes up to a second after the action ended", () => {
+  it("[S-LEARN-2] adds what changed up to a second after the action ended, and no more", () => {
     const slow = [
       ...eating.slice(0, -2),
       end(10, "use"),
       fact(10 + second, "a wet", false, { source: "body" }),
+      fact(10 + second + 1, "a sleepiness", 0.9, { source: "body" }),
+      later(10 + second + 2),
     ];
-    const effects = learned([...slow, later(10 + second + 1)]).map(
-      ({ effect }) => effect.predicate,
-    );
-    expect(effects).toEqual(["wet"]);
+    const notes = learned(slow);
+    expect(notes.map(({ effect, tries, score }) => [effect.predicate, tries, score])).toEqual([
+      ["nothing", 1, 0.5],
+      ["wet", 1, 1],
+    ]);
   });
 
   it("[S-LEARN-2] writes a relation to the target as $thing, and leaves out relations to other things", () => {

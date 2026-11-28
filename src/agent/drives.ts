@@ -15,6 +15,8 @@ interface Drive {
   readonly goal: Condition;
   /** How bad things are, given what the agent believes. Read as 0 to 1. */
   discomfort(belief: Belief, self: EntityId): number;
+  /** Whether it is met. Without this, it is met when its goal holds in belief. */
+  met?(belief: Belief, self: EntityId): boolean;
 }
 
 type Weights = Readonly<Record<string, number>>;
@@ -66,6 +68,9 @@ export function curiosityDrive(notes: () => readonly Note[]): Drive {
       );
       return Math.max(0, ...interest);
     },
+    met(belief, self) {
+      return this.discomfort(belief, self) < SATISFIED;
+    },
   };
 }
 
@@ -98,7 +103,10 @@ export function createArbiter(
     const urgency = urgencies(drives, weights, belief, self);
     const of = (drive: Drive): number => urgency.get(drive.name) ?? 0;
     const wanting = drives
-      .filter((drive) => of(drive) > 0 && !holds(drive.goal, belief, { self }))
+      .filter(
+        (drive) =>
+          of(drive) > 0 && !(drive.met?.(belief, self) ?? holds(drive.goal, belief, { self })),
+      )
       .sort((a, b) => of(b) - of(a) || (a.name < b.name ? -1 : 1));
     const [top] = wanting;
     const held = wanting.find((drive) => drive.name === current);
