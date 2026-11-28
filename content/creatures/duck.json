@@ -6,13 +6,15 @@
   "weights": {
     "hunger": 1,
     "sleepiness": 0.8,
-    "wet": 0.9
+    "wet": 0.9,
+    "curiosity": 0.25
   },
   "rates": {
     "hunger": 0.004,
     "sleepiness": 0.003
   },
   "dislikes": ["wet"],
+  "learning_rate": 0.3,
   "instincts": [
     {
       "id": "eat",
@@ -65,6 +67,81 @@
         {
           "kind": "use",
           "target": "$bed"
+        }
+      ]
+    },
+    {
+      "id": "poke",
+      "params": {
+        "thing": {
+          "has": []
+        }
+      },
+      "pre": [],
+      "effects": [],
+      "body": [
+        {
+          "kind": "move_to",
+          "target": "$thing"
+        },
+        {
+          "kind": "use",
+          "target": "$thing"
+        }
+      ]
+    },
+    {
+      "id": "pick_up",
+      "params": {
+        "thing": {
+          "has": []
+        }
+      },
+      "pre": [],
+      "effects": [],
+      "body": [
+        {
+          "kind": "move_to",
+          "target": "$thing"
+        },
+        {
+          "kind": "grab",
+          "target": "$thing"
+        }
+      ]
+    },
+    {
+      "id": "hop_on",
+      "params": {
+        "thing": {
+          "has": []
+        }
+      },
+      "pre": [],
+      "effects": [],
+      "body": [
+        {
+          "kind": "move_to",
+          "target": "$thing"
+        },
+        {
+          "kind": "jump"
+        }
+      ]
+    },
+    {
+      "id": "go_to",
+      "params": {
+        "thing": {
+          "has": []
+        }
+      },
+      "pre": [],
+      "effects": [],
+      "body": [
+        {
+          "kind": "move_to",
+          "target": "$thing"
         }
       ]
     }

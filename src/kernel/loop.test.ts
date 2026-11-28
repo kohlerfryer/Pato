@@ -133,7 +133,10 @@ describe("planner", () => {
     expect(Object.keys(inputs[0] ?? {}).sort()).toEqual(["beliefs", "goal", "notes", "skills"]);
     expect(inputs[0]?.goal).toEqual(wantUp);
     expect(inputs[0]?.notes).toEqual([note]);
-    expect(inputs[0]?.skills).toEqual([{ id: "hop", params: {}, pre: [], effects: [] }]);
+    expect(inputs[0]?.skills).toEqual([
+      { id: "hop", params: {}, pre: [], effects: [], body: hop.body },
+    ]);
+    expect(inputs[0]?.skills[0]).not.toHaveProperty("origin");
     expect(types(kernel)).toContain("skill");
   });
 

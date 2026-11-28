@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { type Belief, createBelief } from "./belief.ts";
 import { holds } from "./condition.ts";
-import { createArbiter, dislikeDrive, needDrive, urgencies } from "./drives.ts";
+import { createArbiter, curiosityDrive, dislikeDrive, needDrive, urgencies } from "./drives.ts";
+import { record } from "./notes.ts";
+import type { Note } from "../planner/planner.ts";
 
 function feeling(levels: Record<string, number | boolean>): Belief {
   const belief = createBelief();
@@ -108,5 +110,50 @@ describe("dislikes", () => {
   it("[S-DRIVE-5] sets the goal when being wet matters more than being hungry", () => {
     const choose = createArbiter([needDrive("hunger"), wet], { hunger: 1, wet: 0.9 }, "me");
     expect(choose(feeling({ hunger: 0.4, wet: true }), 1)?.predicate).toBe("wet");
+  });
+});
+
+describe("curiosity", () => {
+  function seeing(things: Record<string, string[]>, source = "sight"): Belief {
+    const belief = createBelief();
+    for (const [subject, properties] of Object.entries(things))
+      for (const predicate of properties)
+        belief.add({ subject, predicate, value: true, confidence: 1, tEvent: 0, ttl: 10, source });
+    return belief;
+  }
+  const tries = (property: string, n: number, action: Note["action"] = "use"): Note[] => {
+    let notes: Note[] = [];
+    for (let i = 0; i < n; i++) notes = record(notes, { action, property, effects: [] }, 0.5);
+    return notes;
+  };
+  const curious = (notes: Note[]) => curiosityDrive(() => notes);
+
+  it("[S-DRIVE-4] is fully curious about a thing in view whose properties it has never tried", () => {
+    expect(curious([]).discomfort(seeing({ b: ["edible"] }), "me")).toBe(1);
+  });
+
+  it("[S-DRIVE-4] is 1 / sqrt(1 + n), where n counts the tries on the thing's visible properties", () => {
+    const notes = [...tries("edible", 2), ...tries("soft", 1, "grab")];
+    expect(curious(notes).discomfort(seeing({ b: ["edible", "soft"] }), "me")).toBeCloseTo(0.5, 9);
+  });
+
+  it("[S-DRIVE-4] takes the most curious of the things in view", () => {
+    const notes = tries("edible", 8);
+    const belief = seeing({ b: ["edible"], c: ["soft"] });
+    expect(curious(notes).discomfort(belief, "me")).toBe(1);
+    expect(curious([...notes, ...tries("soft", 3)]).discomfort(belief, "me")).toBeCloseTo(0.5, 9);
+  });
+
+  it("[S-DRIVE-4] is not curious about nothing, about itself, or about what it only remembers", () => {
+    expect(curious([]).discomfort(createBelief(), "me")).toBe(0);
+    expect(curious([]).discomfort(seeing({ me: ["edible"] }), "me")).toBe(0);
+    expect(curious([]).discomfort(seeing({ b: ["edible"] }, "memory"), "me")).toBe(0);
+  });
+
+  it("[S-DRIVE-4] reads the notes as they are now, not as they were when it was made", () => {
+    const notes: Note[] = [];
+    const drive = curiosityDrive(() => notes);
+    notes.push(...tries("edible", 3));
+    expect(drive.discomfort(seeing({ b: ["edible"] }), "me")).toBeCloseTo(0.5, 9);
   });
 });

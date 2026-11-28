@@ -5,8 +5,10 @@
 
 import { type Belief, believing } from "../agent/belief.ts";
 import { type Condition, holds, nameIn } from "../agent/condition.ts";
+import { CURIOSITY } from "../agent/drives.ts";
 import type { EntityId } from "../agent/fact.ts";
 import { matches } from "../agent/skill.ts";
+import { explore, noteSkills } from "./explore.ts";
 import type { PlanInput, PlanOutput, Planner } from "./planner.ts";
 
 /** How many preconditions deep it will chain before giving up. */
@@ -19,7 +21,7 @@ type SkillView = PlanInput["skills"][number];
 interface Search {
   readonly self: EntityId;
   readonly belief: Belief;
-  /** Skills in id order, so ties always break the same way. */
+  /** Skills in id order, so ties always break the same way, then each note as a skill. */
   readonly skills: readonly SkillView[];
   /** Everything the agent believes in, in id order. */
   readonly entities: readonly EntityId[];
@@ -104,14 +106,15 @@ function choose(goal: Condition, search: Search, depth: number): PlanOutput | nu
 
 /** A planner for the agent `self`. */
 export function createStubPlanner(self: EntityId): Planner {
-  return ({ goal, beliefs, skills }) => {
+  return ({ goal, beliefs, skills, notes }) => {
+    if (goal.predicate === CURIOSITY) return explore(beliefs, notes, skills, self);
     const ids = beliefs.flatMap((fact) =>
       fact.object === undefined ? [fact.subject] : [fact.subject, fact.object],
     );
     const search: Search = {
       self,
       belief: believing(beliefs),
-      skills: [...skills].sort((a, b) => (a.id < b.id ? -1 : 1)),
+      skills: [...[...skills].sort((a, b) => (a.id < b.id ? -1 : 1)), ...noteSkills(notes, skills)],
       entities: [...new Set(ids)].sort(),
     };
     return choose(grounded(goal, { [SELF]: self }), search, 0);

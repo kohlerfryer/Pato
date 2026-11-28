@@ -5,7 +5,9 @@
 
 import type { Belief } from "./belief.ts";
 import { type Condition, holds } from "./condition.ts";
+import type { Note } from "../planner/planner.ts";
 import type { EntityId } from "./fact.ts";
+import { inView, triesOn } from "./notes.ts";
 
 interface Drive {
   readonly name: string;
@@ -17,6 +19,8 @@ interface Drive {
 
 type Weights = Readonly<Record<string, number>>;
 
+/** The drive to try things, and the name its goal goes by. */
+export const CURIOSITY = "curiosity";
 /** A need counts as met below this level. */
 const SATISFIED = 0.2;
 /** A challenger must be this much more urgent than the current drive to take over. */
@@ -41,6 +45,26 @@ export function dislikeDrive(state: string): Drive {
     goal: { subject: "$self", predicate: state, op: "is", value: false },
     discomfort(belief, self) {
       return belief.get({ subject: self, predicate: state })?.value === true ? 1 : 0;
+    },
+  };
+}
+
+/**
+ * Curiosity: for each thing in view, `1 / sqrt(1 + n)` with n the tries noted on its visible
+ * properties, and the drive's discomfort is the most curious of these. Satisfied, like a need, once
+ * low enough. `notes` is read each time, so new notes count at once.
+ */
+export function curiosityDrive(notes: () => readonly Note[]): Drive {
+  return {
+    name: CURIOSITY,
+    goal: { subject: "$self", predicate: CURIOSITY, op: "below", value: SATISFIED },
+    discomfort(belief, self) {
+      const known = notes();
+      const interest = [...inView(belief.facts(), self).values()].map(
+        (properties) =>
+          1 / Math.sqrt(1 + properties.reduce((n, property) => n + triesOn(known, property), 0)),
+      );
+      return Math.max(0, ...interest);
     },
   };
 }

@@ -19,6 +19,7 @@ const hen = {
   sight: 8,
   weights: { hunger: 1 },
   rates: { hunger: 0.01 },
+  learning_rate: 0.3,
   instincts: [peck],
 };
 const file = "content/creatures/hen.json";
@@ -30,6 +31,10 @@ describe("readCreatures", () => {
     expect(readCreatures({ [file]: fussy })).toEqual([fussy]);
     expect(reading({ ...hen, dislikes: "wet" })).toThrow(file);
     expect(reading({ ...hen, dislikes: ["wet"] })).toThrow(file);
+  });
+
+  it.each([0, 1.5, "fast"])("[S-MEM-3] refuses a learning rate of %j", (rate) => {
+    expect(reading({ ...hen, learning_rate: rate })).toThrow(file);
   });
 
   it("[S-OBJ-3] reads a creature with an id, speed, reach, sight, weights, rates and instincts", () => {
