@@ -29,26 +29,26 @@ const ids = (scenario: Scenario, ticks = 0): string[] => {
 };
 
 describe("createRun", () => {
-  it("[S-EVAL-1] sets up the world the scenario describes", () => {
+  it("[S-EVAL-1] [S-OBJ-6] sets up the world the scenario describes, each object with its height", () => {
     const { kernel } = createRun(pond, content, 1);
     expect(kernel.world.entities).toEqual([
       {
         id: "food-1",
         position: { x: 4, y: 0 },
         level: 0,
-        props: { kind: "food", edible: 0.6, width: 0.5, depth: 0.5 },
+        props: { kind: "food", edible: 0.6, width: 0.5, depth: 0.5, height: 0 },
       },
       {
         id: "nest-1",
         position: { x: 0, y: 5 },
         level: 0,
-        props: { kind: "nest", soft: 0.1, width: 1.5, depth: 1.5 },
+        props: { kind: "nest", soft: 0.1, width: 1.5, depth: 1.5, height: 0 },
       },
       {
         id: "food-2",
         position: { x: -4, y: 0 },
         level: 0,
-        props: { kind: "food", edible: 0.6, width: 0.5, depth: 0.5 },
+        props: { kind: "food", edible: 0.6, width: 0.5, depth: 0.5, height: 0 },
       },
       {
         id: "duck-1",

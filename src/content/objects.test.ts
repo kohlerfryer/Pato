@@ -2,7 +2,7 @@ import { readdirSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { loadObjects, readObjects } from "./objects.ts";
+import { heightOf, loadObjects, readObjects } from "./objects.ts";
 
 const crate = {
   id: "crate",
@@ -48,6 +48,31 @@ describe("readObjects", () => {
     const box = { ...crate, id: "box" };
     const read = readObjects({ [file]: crate, "content/objects/box.json": box });
     expect(read.map((object) => object.id)).toEqual(["box", "crate"]);
+  });
+});
+
+describe("heights", () => {
+  const tall = (height: unknown): unknown => ({
+    ...crate,
+    footprint: { ...crate.footprint, height },
+  });
+
+  it("[S-OBJ-6] reads a footprint's height in whole levels", () => {
+    expect(readObjects({ [file]: tall(2) })).toEqual([tall(2)]);
+    expect(readObjects({ [file]: tall(0) })).toEqual([tall(0)]);
+  });
+
+  it.each([
+    ["part of a level", 1.5],
+    ["below the ground", -1],
+    ["not a number", "2"],
+  ])("[S-OBJ-6] refuses a height that is %s", (_what, height) => {
+    expect(reading(tall(height))).toThrow(file);
+  });
+
+  it("[S-OBJ-6] takes a height that is left out as zero", () => {
+    expect(heightOf(crate)).toBe(0);
+    expect(heightOf(tall(2) as typeof crate)).toBe(2);
   });
 });
 
