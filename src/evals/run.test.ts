@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { loadContent } from "../content/content.ts";
 import { type Scenario, loadScenarios } from "../content/scenarios.ts";
 import { TICKS_PER_SECOND } from "../kernel/clock.ts";
-import { createRun, runScenario } from "./run.ts";
+import { createWorld } from "../world/state.ts";
+import { createRun, runScenario, worldRules } from "./run.ts";
 import { parseTrace, select } from "./trace.ts";
 
 const content = loadContent();
@@ -96,6 +97,17 @@ describe("createRun", () => {
     kernel.tick();
     const [why] = select(parseTrace(kernel.trace.text()), "drive");
     expect(Object.keys(why?.data.urgencies ?? {})).toContain("wet");
+  });
+
+  it("[S-WORLD-8] makes using a thing do what its object file says", () => {
+    const [first] = content.objects;
+    if (!first) throw new Error("no objects");
+    const flagged = { ...first, props: {}, use: [{ toggle: "open" }] };
+    const rules = worldRules([flagged]);
+    const user = { id: "a", position: { x: 0, y: 0 }, level: 0, props: { reach: 1 } };
+    const thing = { id: "b", position: { x: 0, y: 0 }, level: 0, props: { kind: first.id } };
+    const { state } = rules.use(createWorld([user, thing]), "a", { kind: "use", target: "b" });
+    expect(state.entities.find(({ id }) => id === "b")?.props.open).toBe(true);
   });
 
   it("[S-WORLD-7] starts and stops the rain at the times its triggers give, and logs each", () => {

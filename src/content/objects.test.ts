@@ -22,7 +22,7 @@ describe("readObjects", () => {
   });
 
   it("[S-OBJ-1] reads an object that also says what using it does", () => {
-    const withUse = { ...crate, use: { toggle: "open" } };
+    const withUse = { ...crate, use: [{ toggle: "open" }] };
     expect(readObjects({ [file]: withUse })).toEqual([withUse]);
   });
 
@@ -48,6 +48,13 @@ describe("readObjects", () => {
     const box = { ...crate, id: "box" };
     const read = readObjects({ [file]: crate, "content/objects/box.json": box });
     expect(read.map((object) => object.id)).toEqual(["box", "crate"]);
+  });
+});
+
+describe("uses", () => {
+  it("[S-WORLD-8] refuses a use that is not made of the primitives", () => {
+    expect(reading({ ...crate, use: [{ explode: true }] })).toThrow(file);
+    expect(reading({ ...crate, use: { toggle: "open" } })).toThrow(file);
   });
 });
 
